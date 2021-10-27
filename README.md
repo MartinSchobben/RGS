@@ -7,7 +7,8 @@
 <!-- badges: end -->
 
 Making sense of the Dutch “Referentie Grootboek Schema”! RGS is used for
-business report and taxation as a standardization of journal posts.
+business reports and taxation and encompasses a standardization of
+journal posts.
 
 ## Installation
 
@@ -19,3 +20,7 @@ devtools::install_github("MartinSchobben/RGS")
 ```
 
 ## Run app
+
+``` r
+RGS::RGS_app()
+```

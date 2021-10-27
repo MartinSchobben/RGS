@@ -31,4 +31,6 @@ devtools::install_github("MartinSchobben/RGS")
 
 ## Run app
 
-
+```r
+RGS::RGS_app()
+```
