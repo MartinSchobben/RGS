@@ -6,9 +6,10 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-Making sense of the Dutch “Referentie Grootboek Schema”! RGS is used for
-business reports and taxation and encompasses a standardization of
-journal posts.
+Making sense of the Dutch “[Referentie
+GrootboekSchema](https://www.referentiegrootboekschema.nl/)”! RGS is
+used for business reports and taxation and encompasses a standardization
+of journal posts.
 
 ## Installation
 
