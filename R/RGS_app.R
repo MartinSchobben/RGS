@@ -8,21 +8,31 @@ RGS_app <- function() {
     sidebarLayout(
       sidebarPanel(
         data_ui("RGS", is.data.frame),
-        select_ui("select"),
+        # select_ui("select"),
         filter_ui("filter")
         ),
       mainPanel(
-        fluidRow(dataTableOutput("table"))
+        fluidRow(
+          plotOutput("plot")
         )
       )
+    )
     )
   server <- function(input, output, session) {
     thematic::thematic_shiny()
     RGS <- data_server("RGS")
     filter <- filter_server("filter", RGS)
-    var <- select_server("select", filter)
+    # var <- select_server("select", filter)
 
-    output$table <- renderDataTable(var())
+    output$plot <- renderPlot(
+      width = 750,
+      height = 750,
+      res = 96,
+      {
+      RGS_sunburst(filter())
+      })
+
+
   }
   shinyApp(ui, server)
 }

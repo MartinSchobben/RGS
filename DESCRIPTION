@@ -27,7 +27,8 @@ Imports:
     shiny (>= 1.7.1),
     stringr,
     thematic (>= 0.1.2.1),
-    translateR (>= 1.0)
+    translateR (>= 1.0),
+    vctrs
 Depends: 
     R (>= 2.10)
 LazyData: true
