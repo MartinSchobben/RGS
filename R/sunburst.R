@@ -4,11 +4,10 @@
 #'
 #' @return
 #' @export
-RGS_sunburst <- function(RGS = get_standard_business_reporting("nl")) {
+RGS_sunburst <- function(RGS = get_standard_business_reporting("nl"), interactive = TRUE) {
 
-  p <- parent_seeker(RGS) %>% add_weight() %>% rectify() %>% pie_baker()
+  p <- parent_seeker(RGS) %>% add_weight() %>% rectify(interactive) %>% pie_baker()
 
-  #plotly::ggplotly(p)
   p
   }
 
@@ -55,36 +54,59 @@ add_weight <- function(RGS) {
   long_child <- tidyr::pivot_longer(dplyr::select(wide_RGS, -parent), everything(), names_to = c(".value", "level"), names_sep = "_")
   weights <- dplyr::bind_cols(long_child, dplyr::select(long_weight, -level))
 
+  # tooltip
+
+
   # distinct
   weights <- dplyr::distinct(weights, .data$child, .keep_all = TRUE)
   dplyr::left_join(RGS, weights, by = "child")
 
 }
 
-rectify <- function(RGS) {
+rectify <- function(RGS, interactive) {
 
   dplyr::group_by(RGS, n = nchar(.data$parent)) %>%
     dplyr::group_split() %>%
     .[-1] %>%
-    purrr::imap(rectify_)
+    purrr::imap(rectify_, interactive)
 }
 
-rectify_ <- function(RGS, n = 1) {
+rectify_ <- function(RGS, n = 1, interactive) {
 
   rect_data <- dplyr::group_by(RGS, parent) %>%
-    dplyr::summarise(tot_weight = sum(.data$weight)) %>%
+    dplyr::summarise(
+      tot_weight = sum(.data$weight)
+      ) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(
       ymax = cumsum(tot_weight),
       ymin = dplyr::lag(ymax, n = 1, default = 0)
       )
 
-  ggplot2::geom_rect(
-    data = rect_data,
-    mapping = ggplot2::aes(xmin = 1 + {{n}}, xmax = 2 + {{n}}, ymin = ymin, ymax = ymax, fill = parent),
-    color = "white",
-    show.legend = FALSE
+  if (isTRUE( interactive)) {
+    ggiraph::geom_rect_interactive(
+      data = rect_data,
+      mapping = ggplot2::aes(
+        xmin = 1 + {{n}},
+        xmax = 2 + {{n}},
+        ymin = ymin,
+        ymax = ymax,
+        fill = parent,
+        tooltip = parent,
+        data_id = parent
+        # onclick = omschrijving
+        ),
+      color = "white",
+      show.legend = FALSE
     )
+  } else {
+    ggplot2::geom_rect(
+      data = rect_data,
+      mapping = ggplot2::aes(xmin = 1 + {{n}}, xmax = 2 + {{n}}, ymin = ymin, ymax = ymax, fill = parent),
+      color = "white",
+      show.legend = FALSE
+    )
+  }
 }
 
 #ls_xc <- xc %>% purrr::imap(rectify)
