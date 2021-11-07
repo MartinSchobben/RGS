@@ -11,9 +11,10 @@ filter_ui <- function(id) {
 #' @rdname filter_ui
 #'
 #' @export
-filter_server <- function(id, RGS) {
+filter_server <- function(id, RGS, external = reactiveVal(NULL)) {
 
   stopifnot(is.reactive(RGS))
+  stopifnot(is.reactive(external))
 
   moduleServer(id, function(input, output, session) {
 
@@ -31,12 +32,15 @@ filter_server <- function(id, RGS) {
 
     # filter the dataset
     reactive({
-      dplyr::filter(
+      x <- dplyr::filter(
         RGS(),
-        d_c %in% input$direction | is.na(d_c),
-        dplyr::between(nivo, input$level[1], input$level[2]),
+        .data$d_c %in% input$direction | is.na(.data$d_c),
+        dplyr::between(.data$nivo, input$level[1], input$level[2]),
         !!! rlang::syms(input$dynamic)
         )
+      if (!is.null(external())) x <- dplyr::filter(x, .data$referentiecode %in% external())
+      x
       })
   })
 }
+

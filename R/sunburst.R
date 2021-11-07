@@ -4,30 +4,36 @@
 #'
 #' @return
 #' @export
-RGS_sunburst <- function(RGS = get_standard_business_reporting("nl"), interactive = TRUE) {
+RGS_sunburst <- function(RGS = get_standard_business_reporting("nl"),
+                         interactive = TRUE) {
 
-  p <- parent_seeker(RGS) %>% add_weight() %>% rectify(interactive) %>% pie_baker()
+   add_weight(RGS) %>% rectify(interactive = interactive) %>% pie_baker()
 
-  p
   }
-
-parent_seeker <- function(RGS) {
+#' @rdname RGS_sunburst
+#'
+#' @export
+parent_seeker <- function(RGS = get_standard_business_reporting("nl")) {
 
   ref_codes <- dplyr::pull(RGS, referentiecode)
 
+  # split of parent
   mt <- ref_codes %>%
-    stringr::str_split("((?<=([A-Z]|[:alnum:]))[^[:alnum:]]*(?=[A-Z]))", simplify = F)
+    stringr::str_split(
+      "((?<=([A-Z]|[:alnum:]))[^[:alnum:]]*(?=[A-Z]))",
+      simplify = FALSE
+      )
 
-  # recast into parent
+  # recast into parent vector and tibble
   parent <- purrr::map_chr(mt, parent_code)
-
   tb <- tibble::tibble(parent, child = ref_codes)
-
   dplyr::left_join(tb, RGS, by = c("child" = "referentiecode"))
   }
 
+# assess weight of univariate categorical variable with hierarchical structure
 add_weight <- function(RGS) {
 
+  # split groups and rename child to depth in tree
   ls_RGS <- dplyr::select(RGS, .data$parent, .data$child) %>%
     dplyr::group_by(n = nchar(.data$parent)) %>%
     dplyr::group_split(.keep = FALSE) %>%
@@ -36,12 +42,14 @@ add_weight <- function(RGS) {
   # names
   nm_child <- stringr::str_c("child_", 1:length(ls_RGS))
 
+  # recast as wide data frame
   wide_RGS <- purrr::reduce2(
     ls_RGS,
     purrr::map(nm_child[-length(nm_child)], ~rlang::set_names("parent", .)),
     dplyr::left_join,
   )
 
+  # add counts and normalise to total count of maximu depth in the tree
   RGS_wt <- purrr::map_dfc(
     c("parent", nm_child),
     ~dplyr::add_count(wide_RGS, !!rlang::sym(.x), name = paste0("weight", sub("[^0-9|_]*", "", .x))) %>%
@@ -50,66 +58,96 @@ add_weight <- function(RGS) {
     dplyr::mutate(dplyr::across(.fns = ~.x / weight)) %>%
     dplyr::select(-weight)
 
+  # recast to long format
   long_weight <- tidyr::pivot_longer(RGS_wt, everything(), names_to = c(".value", "level"), names_sep = "_")
   long_child <- tidyr::pivot_longer(dplyr::select(wide_RGS, -parent), everything(), names_to = c(".value", "level"), names_sep = "_")
   weights <- dplyr::bind_cols(long_child, dplyr::select(long_weight, -level))
 
-  # tooltip
-
-
   # distinct
   weights <- dplyr::distinct(weights, .data$child, .keep_all = TRUE)
   dplyr::left_join(RGS, weights, by = "child")
-
 }
 
-rectify <- function(RGS, interactive) {
+# create plot element (rectangles) vectorised
+rectify <- function(RGS, n_max = 2, interactive) {
 
-  dplyr::group_by(RGS, n = nchar(.data$parent)) %>%
-    dplyr::group_split() %>%
-    .[-1] %>%
-    purrr::imap(rectify_, interactive)
+  ls_RGS <- dplyr::group_by(RGS, n = nchar(.data$child)) %>%
+    dplyr::group_split()
+  rect_init <- rectify_(ls_RGS[[1]], n = 0, interactive = interactive)
+  text_init <- textify_(ls_RGS[[1]])
+  purrr::imap(ls_RGS[-1][1:n_max], rectify_, interactive = FALSE, alpha = 0.3) %>%
+    purrr::prepend(rect_init) %>%
+    append(text_init)
 }
 
-rectify_ <- function(RGS, n = 1, interactive) {
-
-  rect_data <- dplyr::group_by(RGS, parent) %>%
+# summarise
+transform_stat <-  function(RGS) {
+  dplyr::group_by(RGS, .data$child) %>%
     dplyr::summarise(
-      tot_weight = sum(.data$weight)
-      ) %>%
+      tot_weight = sum(.data$weight),
+      omschrijving = unique(.data$omschrijving)
+    ) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(
-      ymax = cumsum(tot_weight),
-      ymin = dplyr::lag(ymax, n = 1, default = 0)
-      )
+      ymax = cumsum(.data$tot_weight),
+      ymin = dplyr::lag(.data$ymax, n = 1, default = 0),
+      ymid = .data$ymin + ((.data$ymax - .data$ymin) / 2)
+    )
+}
 
-  if (isTRUE( interactive)) {
+# element wise text
+textify_ <- function(RGS) {
+
+  text_data <- transform_stat(RGS)
+  ggplot2::geom_text(
+    data = text_data,
+    mapping = ggplot2::aes(
+      x = 1.5,
+      y = ymid,
+      label = .data$child
+    )
+  )
+
+}
+# element wise rects
+rectify_ <- function(RGS, n = 1, interactive, alpha = 1) {
+
+  rect_data <- transform_stat(RGS)
+
+  if (isTRUE(interactive)) {
     ggiraph::geom_rect_interactive(
       data = rect_data,
       mapping = ggplot2::aes(
         xmin = 1 + {{n}},
         xmax = 2 + {{n}},
-        ymin = ymin,
-        ymax = ymax,
-        fill = parent,
-        tooltip = parent,
-        data_id = parent
-        # onclick = omschrijving
+        ymin = .data$ymin,
+        ymax = .data$ymax,
+        fill = .data$child,
+        tooltip = .data$omschrijving,
+        data_id = .data$child
         ),
+      alpha = alpha,
       color = "white",
       show.legend = FALSE
     )
   } else {
     ggplot2::geom_rect(
       data = rect_data,
-      mapping = ggplot2::aes(xmin = 1 + {{n}}, xmax = 2 + {{n}}, ymin = ymin, ymax = ymax, fill = parent),
+      mapping = ggplot2::aes(
+        xmin = 1 + {{n}},
+        xmax = 2 + {{n}},
+        ymin = .data$ymin,
+        ymax = .data$ymax,
+        fill = .data$child
+        ),
+      alpha = alpha,
       color = "white",
       show.legend = FALSE
     )
   }
 }
 
-#ls_xc <- xc %>% purrr::imap(rectify)
+# make final plot
 pie_baker <- function(rects, lab = FALSE) {
 
   p <- ggplot2::ggplot() +
@@ -125,81 +163,3 @@ pie_baker <- function(rects, lab = FALSE) {
   }
 }
 
-weight_create <- function(RGS, parent, child) {
-
-  # capture quo
-  child <- enquo(child)
-  #vectors
-  vc_child <- dplyr::pull(RGS, !!child)
-  vc_parent <- dplyr::pull(RGS, {{parent}})
-
-  purrr::map_dbl(vc_parent, ~weight_(vc_child, .x))
-}
-
-
-weight_ <- function(vc_child, parent) {
-
-  n_max <- unique(sapply(vc_child, nchar))
-  n_min <- nchar({{parent}})
-
-  reg_wght <- glue::glue("^((parent))([:alnum:]){((n_max - n_min))}$", .open = "((", .close = "))")
-  weight <- stringr::str_detect(vc_child, reg_wght) %>% sum()
-
-  tot <- length(vc_child[nchar(vc_child) == n_max])
-  if (nchar(parent) > 0) weight / tot else 1
-}
-
-
-RGS_tree <- function(tb) {
-
-  ls_tb <- dplyr::mutate(
-    tb,
-    dplyr::across(
-      tidyselect::vars_select_helpers$where(is.character),
-      ~dplyr::na_if(., "")
-      )
-    ) %>%
-    tidyr::drop_na() %>%
-    dplyr::group_by(n = nchar(parent)) %>%
-    dplyr::group_split(.keep = FALSE)
-
-  tb <- purrr::imap(ls_tb, widening) %>%
-    purrr::reduce2(
-      purrr::map(stringr::str_c("child_", 1:(length(ls_tb) - 1)), ~rlang::set_names("parent", .)),
-      dplyr::left_join,
-      )
-
-  mt <- dplyr::select(tb, -c(parent, stringr::str_c("child_", 1:(length(ls_tb) - 1))))  %>%
-    # dplyr::slice_sample(prop = 0.1) %>%
-    tibble::column_to_rownames(paste0("child_", length(ls_tb))) %>%
-    as.matrix()
-  dd <- dist(mt, method = "binary")
-  hc <- hclust(dd, method = "single")
-  hc
-  # plot(ape::as.phylo(hc), type = "fan")
-}
-
-widening <- function(codes, n) {
-  tidyr::pivot_wider(
-    codes,
-    names_from = parent,
-    values_from = parent,
-    values_fn = function(x) as.integer(is.character(x)),
-    values_fill = 0
-    ) %>%
-    dplyr::left_join(codes, ., by = "child") %>%
-    dplyr::rename("child_{n}" := child)
-}
-
-
-parent_code <- function(code) {
-
-  code <- purrr::map_chr(code, ~stringr::str_replace(.x, "\\s", NA_character_))
-  nmax <- length(code)
-  stringr::str_c(code[1:nmax - 1], collapse = "")
-}
-
-labeller <- function(RGS = dplyr::select(RGS, c(parent, starts_with("child_")))) {
-  n_end <- ncol(RGS)
-  terminal_node <- RGS[[n_end]]
-}

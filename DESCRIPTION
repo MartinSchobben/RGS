@@ -34,5 +34,7 @@ Depends:
 LazyData: true
 Suggests: 
     testthat (>= 3.0.0),
-    roxygen2
+    roxygen2,
+    shinytest,
+    globals
 Config/testthat/edition: 3
