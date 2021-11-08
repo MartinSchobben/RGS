@@ -39,3 +39,40 @@ test_that("Sever output based on figure selection", {
       )
   })
 })
+
+alternative_extract <- function(
+  RGS = get_standard_business_reporting("nl"),
+  pattern
+  ) {
+
+  dplyr::filter(
+    RGS,
+    stringr::str_detect(.data$referentiecode, paste0("^", pattern))
+    )[["referentiecode"]] %>%
+    .[!stringr::str_detect(., paste0("^", pattern, "$"))]
+
+}
+
+test_that("Find children", {
+  expect_equal(
+    find_children(parent = "B"),
+    alternative_extract(pattern = "B")
+    )
+  expect_equal(
+    find_children(parent = "BIva"),
+    alternative_extract(pattern = "BIva")
+  )
+  expect_equal(
+    find_children(parent = "BIvaKou"),
+    alternative_extract(pattern = "BIvaKou")
+  )
+  expect_equal(
+    find_children(parent = "BIvaKouVvp"),
+    alternative_extract(pattern = "BIvaKouVvp")
+  )
+  # terminal node returns previous node's children
+  expect_equal(
+    find_children(parent = "BIvaKouVvpBeg"),
+    alternative_extract(pattern = "BIvaKouVvp")
+  )
+})

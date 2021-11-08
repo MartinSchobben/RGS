@@ -27,7 +27,15 @@ filter_server <- function(id, RGS, external = reactiveVal(NULL)) {
         colnames()
       )
     output$controls <- renderUI({
-      checkboxGroupInput(NS(id, "dynamic"), "Bedrijfstype", choices = lgl_vars())
+      selectizeInput(
+        NS(id, "dynamic"),
+        "Bedrijfstype",
+        choices = lgl_vars(),
+        options = list(
+          placeholder = "Selecteer een bedrijfstype",
+          onInitialize = I('function() { this.setValue(""); }')
+        )
+      )
     })
 
     # filter the dataset
@@ -38,7 +46,9 @@ filter_server <- function(id, RGS, external = reactiveVal(NULL)) {
         dplyr::between(.data$nivo, input$level[1], input$level[2]),
         !!! rlang::syms(input$dynamic)
         )
-      if (!is.null(external())) x <- dplyr::filter(x, .data$referentiecode %in% external())
+      if (!is.null(external())) {
+        x <- dplyr::filter(x, .data$referentiecode %in% external())
+      }
       x
       })
   })
