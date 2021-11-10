@@ -5,7 +5,7 @@
 #' @return
 #' @export
 RGS_sunburst <- function(
-  RGS = parent_seeker(get_standard_business_reporting("nl")),
+  RGS = parent_seeker(get_standard_business_reporting("Nederland")),
   interactive = TRUE
   ) {
 
@@ -16,15 +16,15 @@ RGS_sunburst <- function(
 #' @rdname RGS_sunburst
 #'
 #' @export
-parent_seeker <- function(RGS = get_standard_business_reporting("nl")) {
+parent_seeker <- function(RGS = get_standard_business_reporting("Nederland")) {
 
   ref_codes <- dplyr::pull(RGS, referentiecode)
 
   # split of parent
-  mt <- parent_seeker_(ref_codes)
+  ls_par <- parent_seeker_(ref_codes)
 
   # recast into parent vector and tibble
-  parent <- purrr::map_chr(mt, parent_code)
+  parent <- purrr::map_chr(ls_par, parent_code)
   tb <- tibble::tibble(parent, child = ref_codes)
   dplyr::left_join(tb, RGS, by = c("child" = "referentiecode"))
 }
@@ -33,16 +33,22 @@ parent_seeker <- function(RGS = get_standard_business_reporting("nl")) {
 parent_seeker_ <- function(code) {
   stringr::str_split(
     code,
-    "((?<=([A-Z]|[:alnum:]))[^[:alnum:]]*(?=[A-Z]))",
-    simplify = FALSE
-  )
+    "((?<=([A-Z]|[:alnum:]))[^[:alnum:]]*(?=[A-Z]))"
+    )
 }
 
-parent_code <- function(code) {
+parent_code <- function(code, parent = TRUE, label = "child_") {
 
-  code <- purrr::map_chr(code, ~stringr::str_replace(.x, "\\s", NA_character_))
+  # make NAs
+  code <- stringr::str_replace(code, "\\s", NA_character_)
+  # length character vector
   nmax <- length(code)
-  stringr::str_c(code[1:nmax - 1], collapse = "")
+
+  if (isTRUE(parent)) {
+    stringr::str_c(code[1:nmax - 1], collapse = "")
+  } else {
+    rlang::set_names(code, nm = c(paste0(label, 1:nmax)))
+  }
 }
 
 # assess weight of univariate categorical variable with hierarchical structure
@@ -135,10 +141,11 @@ textify_ <- function(RGS) {
       y = ymid,
       label = .data$element
       ),
-    vjust = 1,
-    hjust = 1
+    # vjust = 1,
+    # hjust = 1
     # direction = "y",
-    #force = 2
+    force = 2,
+    size = 6
   )
 
 }

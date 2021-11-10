@@ -3,15 +3,44 @@
 #' @export
 data_ui <- function(id, filter = NULL) {
 
-  names <- code_refs$country
-  selectInput(NS(id, "dataset"), h2("Pick a dataset"), choices = names)
+  names <- ("Nederland")
+  selectInput(
+    NS(id, "dataset"),
+    h5("Selecteer schema"),
+    choices = names
+    )
 }
 #' @rdname data_ui
 #'
 #' @export
-data_server <- function(id) {
+download_ui <- function(id) {
+  downloadButton(NS(id, "download"), "Download")
+}
+#' @rdname data_ui
+#'
+#' @export
+data_server <- function(id, RGS) {
+
+  stopifnot(is.reactive(RGS))
 
   moduleServer(id, function(input, output, session) {
-    reactive(get_standard_business_reporting(input$dataset))
+
+    RGS <- reactive(get_standard_business_reporting(input$dataset))
+
+    output$download <- downloadHandler(
+      filename = function() {
+        name <- dplyr::filter(code_refs, .data$country == input$dataset) %>%
+          dplyr::pull(.data$url_ref) %>%
+          fs::path_file() %>%
+          fs::path_ext_remove()
+        paste0(name, ".csv")
+      },
+      content = function(file) {
+        readr::write_csv(RGS(), file)
+      }
+    )
+
+    RGS
   })
-  }
+
+}

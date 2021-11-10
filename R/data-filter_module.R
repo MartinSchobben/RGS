@@ -3,8 +3,20 @@
 #' @export
 filter_ui <- function(id) {
   tagList(
-    checkboxGroupInput(NS(id, "direction"), "Balanszijde", choices = c(credit = "C", debet = "D"), selected = c("C", "D")),
-    sliderInput(NS(id, "level"), "Niveau", min = 1, max = 5, value = c(1, 5)),
+    checkboxGroupInput(
+      NS(id, "direction"),
+      h5("Balanszijde"),
+      choices = c(credit = "C", debet = "D"),
+      selected = c("C", "D"),
+      inline = TRUE
+      ),
+    sliderInput(
+      NS(id, "level"),
+      h5("Niveau"),
+      min = 1,
+      max = 5,
+      value = c(1, 5)
+      ),
     uiOutput(NS(id, "controls"))
     )
   }
@@ -29,7 +41,7 @@ filter_server <- function(id, RGS, external = reactiveVal(NULL)) {
     output$controls <- renderUI({
       selectizeInput(
         NS(id, "dynamic"),
-        "Bedrijfstype",
+        h5("Bedrijfstype"),
         choices = lgl_vars(),
         options = list(
           placeholder = "Selecteer een bedrijfstype",

@@ -3,7 +3,12 @@ test_that("Loading the respective dataset and alter ui based on availability", {
 })
 
 test_that("Server output based on available data", {
-  testServer(data_server, {
+
+  x <- reactiveVal()
+  testServer(data_server, args = list(RGS = x), {
+
+    x(get_standard_business_reporting("nl"))
+
     dataset <- session$getReturned()
 
     session$setInputs(dataset = "nl")

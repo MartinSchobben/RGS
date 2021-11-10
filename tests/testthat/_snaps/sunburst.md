@@ -1,7 +1,7 @@
 # parent and weight generation work
 
     Code
-      parent_seeker(get_standard_business_reporting("nl"))
+      parent_seeker(get_standard_business_reporting("Nederland"))
     Output
       # A tibble: 4,571 x 26
          parent  child referentie_omsl~ sortering referentienummer omschrijving_verko~

@@ -1,17 +1,21 @@
-#' Hierachical plot shiny module
+#' Hierarchical plot shiny module
 #'
 #' @param id Namespace id
 #' @param output Plot output
 #'
 #' @return Shiny GUI or server
 #' @export
-plot_ui <- function(id, output = c("plot", "description")) {
+plot_ui <- function(id, output = c("plot", "description"), download) {
   tagList(
     fluidRow(
       column(
-        7,
+        6,
         tags$br(),
-        actionButton(NS(id, "reset"), label = "Reset selection"),
+        shiny::fixedRow(
+          actionButton(NS(id, "reset"), label = "Reset"),
+          # actionButton(NS(id, "terug"), label = "Terug"),
+          download
+        ),
         ggiraph::ggiraphOutput(
           NS(id, output[output == "plot"]),
           width = "100%",
@@ -19,12 +23,15 @@ plot_ui <- function(id, output = c("plot", "description")) {
         )
       ),
       column(
-        5,
+        6,
         tags$br(),
-        wellPanel(h4("Referentiecode"), tableOutput(NS(id, "reference"))),
-        tags$br(),
-        tags$br(),
-        tableOutput(NS(id, output[output == "description"]))
+        wellPanel(
+          h5("Referentiecode"),
+          tableOutput(NS(id, "reference")),
+          tags$br(),
+          tags$br(),
+          tableOutput(NS(id, output[output == "description"]))
+        )
       )
     )
   )
@@ -54,8 +61,8 @@ plot_server <- function(id, RGS, child) {
     output$plot <-  ggiraph::renderGirafe({
       ggiraph::girafe(
         code = print(RGS_sunburst(parent())),
-        width_svg = 8,
-        height_svg = 8,
+        width_svg = 6,
+        height_svg = 6,
         options = list(
           ggiraph::opts_hover(
             css = "fill:#FF3333;stroke:black;cursor:pointer;",
@@ -100,7 +107,6 @@ plot_server <- function(id, RGS, child) {
         rows(dplyr::bind_rows(rows(), obs))
       } else {
         rows(dplyr::rows_upsert(rows(), obs, by = "nivo"))
-        message(glue::glue("{rows()[nrow(rows()),]}"))
       }
     })
 

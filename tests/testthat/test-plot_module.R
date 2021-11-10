@@ -5,8 +5,8 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   plot_server(
     "plot",
-    reactiveVal(get_standard_business_reporting("nl")),
-    reactiveVal(get_standard_business_reporting("nl")$referentiecode)
+    reactiveVal(get_standard_business_reporting("Nederland")),
+    reactiveVal(get_standard_business_reporting("Nederland")$referentiecode)
     )
 }
 
@@ -23,8 +23,8 @@ test_that("Sever output based on figure selection", {
   x <- reactiveVal()
   y <- reactiveVal()
   testServer(plot_server, args = list(RGS = x, child = y), {
-    x(get_standard_business_reporting("nl"))
-    y(get_standard_business_reporting("nl")$referentiecode)
+    x(get_standard_business_reporting("Nederland"))
+    y(get_standard_business_reporting("Nederland")$referentiecode)
 
     session$flushReact()
 
@@ -33,7 +33,7 @@ test_that("Sever output based on figure selection", {
     expect_equal(
       session$returned(),
       find_children(
-        parent_seeker(get_standard_business_reporting("nl")),
+        parent_seeker(get_standard_business_reporting("Nederland")),
         "BFvaOvr"
         )
       )
