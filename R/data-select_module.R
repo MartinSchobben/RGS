@@ -17,7 +17,7 @@ select_ui <- function(id) {
 #' @rdname select_ui
 #'
 #' @export
-select_server <- function(id, RGS, ref_code = "referentiecode",
+select_server <- function(id, RGS, ref_code = c("referentiecode", "nivo"),
                           default = c("omschrijving", "referentienummer")) {
 
   stopifnot(is.reactive(RGS))
@@ -25,7 +25,7 @@ select_server <- function(id, RGS, ref_code = "referentiecode",
   moduleServer(id, function(input, output, session) {
 
     # default selection
-    def_vars <- reactive(default[default %in% names(RGS())])
+    def_vars <- reactive(default[default %in% colnames(RGS())])
 
     observeEvent(RGS(), {
       updateSelectInput(

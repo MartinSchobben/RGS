@@ -22,7 +22,18 @@
 ---
 
     Code
-      reformat_data(dplyr::filter(RGS, nivo == 5))
+      display_data(nested, labels)
+    Output
+      # A tibble: 2 x 3
+        `Niveau 1` omschrijving              referentienummer
+        <chr>      <chr>                     <chr>           
+      1 B          BALANS                    0               
+      2 W          WINST- EN VERLIESREKENING 0               
+
+---
+
+    Code
+      nested
     Output
       # A tibble: 2,891 x 9
          `Niveau 1` `Niveau 2` `Niveau 3` `Niveau 4` `Niveau 5`    referentiecode
@@ -43,41 +54,20 @@
 ---
 
     Code
-      display_data(nested)
+      display_data(nested, labels)
     Output
-      # A tibble: 2 x 4
-        `Niveau 1` omschrijving              referentienummer  nivo
-        <chr>      <chr>                     <chr>            <dbl>
-      1 B          BALANS                    0                    1
-      2 W          WINST- EN VERLIESREKENING 0                    1
-
----
-
-    Code
-      reactable::reactable(display_data(nested), details = drill_down(nested,
-        display_data(nested), "Niveau"))
-
----
-
-    Code
-      reactable::reactable(display_data(nested), details = drill_down(nested,
-        display_data(nested), "Niveau"), columns = remove_column_names(display_data(
-        nested)))
-
----
-
-    Code
-      display_data(nested)
-    Output
-      # A tibble: 2 x 4
-        `Niveau 1` omschrijving              referentienummer  nivo
-        <chr>      <chr>                     <chr>            <dbl>
-      1 B          BALANS                    0                    1
-      2 W          WINST- EN VERLIESREKENING 0                    1
-
----
-
-    Code
-      reactable::reactable(display_data(nested), details = drill_down(nested,
-        display_data(nested), "Niveau"))
+      # A tibble: 2,891 x 3
+         `Niveau 5`    omschrijving                                   referentienummer
+         <chr>         <chr>                                          <chr>           
+       1 BIvaKouVvpBeg Beginbalans (overname eindsaldo vorig jaar) k~ 0101010.01      
+       2 BIvaKouVvpInv Investeringen kosten van oprichting en van ui~ 0101010.02      
+       3 BIvaKouVvpAdo Bij overname verkregen activa kosten van opri~ 0101010.03      
+       4 BIvaKouVvpDes Desinvesteringen kosten van oprichting en van~ 0101010.04      
+       5 BIvaKouVvpDda Afstotingen kosten van oprichting en van uitg~ 0101010.05      
+       6 BIvaKouVvpOmv Omrekeningsverschillen kosten van oprichting ~ 0101010.06      
+       7 BIvaKouVvpOvm Overige mutaties kosten van oprichting en van~ 0101010.07      
+       8 BIvaKouAkpBeg Beginbalans (overname eindsaldo vorig jaar) k~ 0101015.01      
+       9 BIvaKouAkpInv Investeringen kosten van oprichting en van ui~ 0101015.02      
+      10 BIvaKouAkpAdo Bij overname verkregen activa kosten van opri~ 0101015.03      
+      # ... with 2,881 more rows
 

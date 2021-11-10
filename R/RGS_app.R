@@ -19,6 +19,7 @@ RGS_app <- function() {
             "Tabel",
             select_ui("select"),
             tags$br(),
+            #dataTableOutput("table")
             table_ui("table")
           )
         )
@@ -42,6 +43,7 @@ RGS_app <- function() {
     # plot
     child <- plot_server("plot", filter, child)
     # table
+    #output$table <- renderDataTable(display_data(var()))
     table_server("table", var)
 
   }

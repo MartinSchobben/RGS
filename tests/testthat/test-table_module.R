@@ -2,40 +2,52 @@ RGS <- dplyr::select(
   get_standard_business_reporting("Nederland"),
   .data$referentiecode,
   .data$omschrijving,
-  .data$referentienummer
+  .data$referentienummer,
+  .data$nivo
 )
 
-ui <- fluidPage(
-  table_ui("table")
-)
-
-
-server <- function(input, output, session) {
-  table_server(
-    "table",
-    reactiveVal(RGS)
-  )
-}
-
-shinyApp(ui, server)
+# ui <- fluidPage(
+#   table_ui("table")
+# )
+#
+# server <- function(input, output, session) {
+#   table_server(
+#     "table",
+#     reactiveVal(RGS)
+#   )
+# }
+#
+# shinyApp(ui, server)
 
 test_that("drill down nesting", {
 
   # reformat
-  refs <- dplyr::pull(RGS, .data$referentiecode)
-  chunks <- purrr::map_df(
-    parent_seeker_(refs),
-    ~parent_code(.x, parent = FALSE, label = "Niveau")
-    )
-  split <- purrr::accumulate(as.list(chunks), stringr::str_c) %>%
-    tibble::as_tibble()
-
-  # nesting
-  nested <- dplyr::bind_cols(split, tidyr::replace_na(RGS, list(referentienummer = 0)))
+  labels <- "Niveau "
+  nested <- reformat_data(RGS)
+  expect_snapshot(nested)
 
   # display
-  expect_snapshot(display_data(nested, 2))
-  expect_snapshot(reactable::reactable(display_data(nested), details = drill_down(nested)))
+  expect_snapshot(display_data(nested, labels))
+  expect_snapshot(
+    reactable::reactable(
+      display_data(nested, labels),
+      details = drill_down(nested, display_data(nested, labels), labels)
+      )
+    )
   # remove column names
-  expect_snapshot(reactable::reactable(display_data(nested), columns = remove_column_names(display_data(nested))))
+  expect_snapshot(
+    reactable::reactable(
+      display_data(nested, labels),
+      details = drill_down(nested, display_data(nested, labels), labels),
+      columns = remove_column_names(display_data(nested, labels))
+      )
+    )
+
+  # reformat on filter data
+  nested <- reformat_data(dplyr::filter(RGS, nivo == 5))
+  expect_snapshot(nested)
+
+  # display
+  expect_snapshot(display_data(nested, labels))
+
 })
