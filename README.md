@@ -4,6 +4,11 @@
 # RGS
 
 <!-- badges: start -->
+
+[![Codecov test
+coverage](https://codecov.io/gh/MartinSchobben/RGS/branch/master/graph/badge.svg)](https://app.codecov.io/gh/MartinSchobben/RGS?branch=master)
+[![R-CMD-check](https://github.com/MartinSchobben/RGS/workflows/R-CMD-check/badge.svg)](https://github.com/MartinSchobben/RGS/actions)
+[![Last-changedate](https://img.shields.io/badge/last%20change-2021--11--12-yellowgreen.svg)](/commits/master)
 <!-- badges: end -->
 
 Making sense of the Dutch “[Referentie
