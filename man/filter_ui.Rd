@@ -7,7 +7,12 @@
 \usage{
 filter_ui(id)
 
-filter_server(id, RGS)
+filter_server(id, RGS, external = reactiveVal(NULL))
+}
+\arguments{
+\item{id}{Namespace id}
+
+\item{RGS}{Reference}
 }
 \description{
 Variable filtering

@@ -10,7 +10,8 @@ select_ui(id)
 select_server(
   id,
   RGS,
-  default = c("referentiecode", "omschrijving", "referentienummer")
+  ref_code = c("referentiecode", "nivo"),
+  default = c("omschrijving", "referentienummer")
 )
 }
 \description{

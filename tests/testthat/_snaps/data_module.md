@@ -8,7 +8,7 @@
           <h5>Selecteer schema</h5>
         </label>
         <div>
-          <select id="x-dataset"><option value="Netherlands" selected>Netherlands</option></select>
+          <select id="x-dataset"><option value="Nederland" selected>Nederland</option></select>
           <script type="application/json" data-for="x-dataset" data-nonempty="">{"plugins":["selectize-plugin-a11y"]}</script>
         </div>
       </div>

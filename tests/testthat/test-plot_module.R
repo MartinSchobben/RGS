@@ -1,5 +1,5 @@
 ui <- fluidPage(
-  plot_ui("plot")
+  plot_ui("plot", download = download_ui("RGS"))
 )
 
 server <- function(input, output, session) {
@@ -41,7 +41,7 @@ test_that("Sever output based on figure selection", {
 })
 
 alternative_extract <- function(
-  RGS = get_standard_business_reporting("nl"),
+  RGS = get_standard_business_reporting("Nederland"),
   pattern
   ) {
 
@@ -50,7 +50,6 @@ alternative_extract <- function(
     stringr::str_detect(.data$referentiecode, paste0("^", pattern))
     )[["referentiecode"]] %>%
     .[!stringr::str_detect(., paste0("^", pattern, "$"))]
-
 }
 
 test_that("Find children", {

@@ -4,10 +4,11 @@
 \alias{get_standard_business_reporting}
 \title{Obtain country specific reference system.}
 \usage{
-get_standard_business_reporting(country = "nl")
+get_standard_business_reporting(country = "Nederland")
 }
 \arguments{
-\item{country}{A character string of the countries names or abbreviation.}
+\item{country}{A character string of the countries names. Any language is
+supported.}
 }
 \value{
 One or more entries form the coder reference database in tibble

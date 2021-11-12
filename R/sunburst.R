@@ -134,18 +134,20 @@ transform_stat <-  function(RGS) {
 textify_ <- function(RGS) {
 
   text_data <- transform_stat(RGS)
-  ggrepel::geom_text_repel(
-    data = text_data,
-    mapping = ggplot2::aes(
-      x = 1.5,
-      y = ymid,
-      label = .data$element
+  suppressWarnings(
+    ggrepel::geom_text_repel(
+      data = text_data,
+      mapping = ggplot2::aes(
+        x = 1.5,
+        y = ymid,
+        label = .data$element
       ),
-    # vjust = 1,
-    # hjust = 1
-    # direction = "y",
-    force = 2,
-    size = 6
+        # vjust = 1,
+        # hjust = 1
+        # direction = "y",
+        force = 2,
+        size = 6
+    )
   )
 
 }
@@ -202,4 +204,3 @@ pie_baker <- function(rects, lab = FALSE) {
     p
   }
 }
-

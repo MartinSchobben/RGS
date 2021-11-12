@@ -10,8 +10,8 @@ select_ui <- function(id) {
       choices = NULL,
       multiple = TRUE,
       width = "75%"
-    ),
-    downloadButton("Download")
+    )#,
+    #download_ui("RGS")
   )
 }
 #' @rdname select_ui

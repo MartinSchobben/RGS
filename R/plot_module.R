@@ -5,7 +5,7 @@
 #'
 #' @return Shiny GUI or server
 #' @export
-plot_ui <- function(id, output = c("plot", "description"), download) {
+plot_ui <- function(id, output = c("plot", "description"), download = TRUE) {
   tagList(
     fluidRow(
       column(
@@ -14,7 +14,7 @@ plot_ui <- function(id, output = c("plot", "description"), download) {
         shiny::fixedRow(
           actionButton(NS(id, "reset"), label = "Reset"),
           # actionButton(NS(id, "terug"), label = "Terug"),
-          download
+          if (isTRUE(download)) uiOutput(NS(id, "download")) else NULL
         ),
         ggiraph::ggiraphOutput(
           NS(id, output[output == "plot"]),
@@ -59,18 +59,20 @@ plot_server <- function(id, RGS, child) {
 
     # plot
     output$plot <-  ggiraph::renderGirafe({
-      ggiraph::girafe(
-        code = print(RGS_sunburst(parent())),
-        width_svg = 6,
-        height_svg = 6,
-        options = list(
-          ggiraph::opts_hover(
-            css = "fill:#FF3333;stroke:black;cursor:pointer;",
-            reactive = TRUE
-            ),
-          ggiraph::opts_selection(
-            type = "single",
-            css = "fill:#FF3333;stroke:black;"
+      suppressWarnings(
+        ggiraph::girafe(
+          code = print(RGS_sunburst(parent())),
+          width_svg = 6,
+          height_svg = 6,
+          options = list(
+            ggiraph::opts_hover(
+              css = "fill:#FF3333;stroke:black;cursor:pointer;",
+              reactive = TRUE
+              ),
+            ggiraph::opts_selection(
+              type = "single",
+              css = "fill:#FF3333;stroke:black;"
+              )
             )
           )
         )
@@ -90,6 +92,9 @@ plot_server <- function(id, RGS, child) {
     },
     digits = 0
     )
+
+    # download button
+    output$download <- renderUI(output_ui("RGS", 1))
 
     # referentiecode
     output$reference <- renderTable(ref_output(selected()))
@@ -115,10 +120,7 @@ plot_server <- function(id, RGS, child) {
       if (nrow(rows()) > 0) {
         ref <- dplyr::pull(rows(), .data$referentiecode)[nrow(rows())]
         code <- find_children(parent(), ref)
-        # message(glue::glue("{} "))
-
         child(code)
-
       }
     })
 
@@ -130,7 +132,7 @@ plot_server <- function(id, RGS, child) {
 
 # find the children for the selected parent in the plot
 find_children <- function(
-  RGS = parent_seeker(get_standard_business_reporting("nl")),
+  RGS = parent_seeker(get_standard_business_reporting("Nederland")),
   parent
   ) {
 

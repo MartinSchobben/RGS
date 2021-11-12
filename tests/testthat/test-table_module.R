@@ -1,3 +1,4 @@
+# data
 RGS <- dplyr::select(
   get_standard_business_reporting("Nederland"),
   .data$referentiecode,
@@ -6,18 +7,21 @@ RGS <- dplyr::select(
   .data$nivo
 )
 
-# ui <- fluidPage(
-#   table_ui("table")
-# )
-#
-# server <- function(input, output, session) {
-#   table_server(
-#     "table",
-#     reactiveVal(RGS)
-#   )
-# }
-#
-# shinyApp(ui, server)
+ui <- fluidPage(
+  table_ui("table")
+)
+
+server <- function(input, output, session) {
+  table_server(
+    "table",
+    reactiveVal(RGS)
+  )
+}
+
+# virtual sessions
+test_that("Can I select reference codes from plot", {
+  app <- shinytest::ShinyDriver$new(shinyApp(ui, server))
+})
 
 test_that("drill down nesting", {
 
@@ -49,5 +53,4 @@ test_that("drill down nesting", {
 
   # display
   expect_snapshot(display_data(nested, labels))
-
 })

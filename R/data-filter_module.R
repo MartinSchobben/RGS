@@ -1,5 +1,8 @@
 #' Variable filtering
 #'
+#' @param id Namespace id
+#' @param RGS Reference
+#'
 #' @export
 filter_ui <- function(id) {
   tagList(
@@ -18,6 +21,7 @@ filter_ui <- function(id) {
       value = c(1, 5)
       ),
     uiOutput(NS(id, "controls"))
+
     )
   }
 #' @rdname filter_ui
@@ -65,4 +69,3 @@ filter_server <- function(id, RGS, external = reactiveVal(NULL)) {
       })
   })
 }
-

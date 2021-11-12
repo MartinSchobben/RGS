@@ -1,17 +1,21 @@
 #' Hierarchical table shiny module
 #'
-#' @param id Namespace id
-#' @param output Table output
+#' This module creates the table input and output.
+#'
+#' @param id Namespace id.
+#' @param RGS Reactive value of the RGS data.
+#' @param labels Labels for hierarchical structure (default = \code{"Niveau "}.
 #'
 #' @return Shiny GUI or server
+#'
 #' @export
-table_ui <- function(id) {
-
+table_ui <- function(id, select, download = TRUE) {
   tagList(
+    select,
+    if (isTRUE(download)) uiOutput(NS(id, "download")) else NULL,
+    tags$br(),
     shinycssloaders::withSpinner(reactable::reactableOutput(NS(id,"table")))
-    # dataTableOutput(NS(id,"table"))
     )
-
 }
 #' @rdname plot_ui
 #'
@@ -23,21 +27,22 @@ table_server <- function(id, RGS, labels = "Niveau ") {
 
   moduleServer(id, function(input, output, session) {
 
+    # reformat to include hierarchy
     nested <- reactive(reformat_data(RGS()))
 
-
-
-    # table
+    # table output with nested data structure
     output$table <- reactable::renderReactable({
       reactable::reactable(
         display_data(nested(), labels),
         details = drill_down(nested(), display_data(nested(), labels), labels)
-        # elementId = "reactable"
       )
     })
+    # download button
+    output$download <- renderUI(output_ui("RGS", 2))
   })
 }
 
+# function to reformat the RGS data to include hierarchical structure
 reformat_data <- function(RGS, labels = "Niveau ") {
 
   # find children
@@ -48,6 +53,7 @@ reformat_data <- function(RGS, labels = "Niveau ") {
     ~ parent_code(.x, parent = FALSE, label = labels)
     )
 
+  # splitted reference code according to hierarchical structure
   splits <- purrr::accumulate(as.list(chunks), stringr::str_c) %>%
       tibble::as_tibble()
 
@@ -58,24 +64,28 @@ reformat_data <- function(RGS, labels = "Niveau ") {
     )
 }
 
+# get the data ready for table output
 display_data <- function(original, labels) {
-
 
   if (is.character(labels)) {
     # minimum level of ref code
     level <- min(dplyr::pull(original, .data$nivo))
     # label columns to be removed
-    labs <- find_label_colums(nested, labels)
+    labs <- find_label_colums(original, labels)
     labs <- labs[!labs %in% paste0(labels, level)]
+  } else {
+    level <- labels
   }
-
   # filter NA based on the first column of augmented data
   original <- original [!is.na(original[[level]]),]
   # regex
   pattern <- stringr::str_c("^", unique(original[[level]]), "$", collapse = "|")
 
   # filter ref codes
-  xc <- dplyr::filter(original, stringr::str_detect(.data$referentiecode, pattern)) %>%
+  xc <- dplyr::filter(
+    original,
+    stringr::str_detect(.data$referentiecode, pattern)
+    ) %>%
     dplyr::select(
       # none important columns
       -c(.data$referentiecode, .data$nivo)
@@ -89,9 +99,9 @@ display_data <- function(original, labels) {
   } else {
     return(xc)
   }
-
 }
 
+# recursive drill down of table for nested tables
 drill_down <- function(original, display, labels) {
   function(index) {
 
@@ -126,10 +136,12 @@ drill_down <- function(original, display, labels) {
   }
 }
 
+# find column names referring to hierachy labels
 find_label_colums <- function(RGS, labels) {
   colnames(RGS)[stringr::str_detect(colnames(RGS), labels)]
 }
 
+# remove column names for table output
 remove_column_names <- function(RGS) {
   rlang::rep_named(colnames(RGS)[-1], list(reactable::colDef(name = "")))
 }
