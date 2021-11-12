@@ -51,13 +51,17 @@ reformat_data <- function(RGS, labels = "Niveau ") {
   # find children
   refs <- dplyr::pull(RGS, .data$referentiecode)
 
+  # splits
   chunks <- purrr::map_df(
     parent_seeker_(refs),
     ~ parent_code(.x, parent = FALSE, label = labels)
     )
 
-  # splitted reference code according to hierarchical structure
-  splits <- purrr::accumulate(as.list(chunks), stringr::str_c) %>%
+  # levels
+  lvls <- unique(RGS$nivo)
+
+  # splice splitted reference code according to hierarchical structure
+  splits <- purrr::accumulate(as.list(chunks), stringr::str_c)[lvls] %>%
       tibble::as_tibble()
 
   # nesting
