@@ -5,16 +5,28 @@
 \alias{output_ui}
 \alias{input_server}
 \alias{output_server}
-\title{Dataset selection}
+\title{Dataset selection and output}
 \usage{
 input_ui(id, filter = NULL)
 
-output_ui(id)
+output_ui(id, n)
 
 input_server(id)
 
-output_server(id, augmented)
+output_server(id, augmented, n)
+}
+\arguments{
+\item{id}{Namespace id.}
+
+\item{filter}{Currently not supported.}
+
+\item{n}{Number of download button (if multiple tabs exist).}
+
+\item{augmented}{Reactive value for the augmented dataset.}
+}
+\value{
+Shiny GUI or server.
 }
 \description{
-Dataset selection
+GUI and server modules for uploading and downloading RGS datasets.
 }

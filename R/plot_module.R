@@ -1,9 +1,14 @@
 #' Hierarchical plot shiny module
 #'
-#' @param id Namespace id
-#' @param output Plot output
+#' GUI and server modules for hierarchical plotting of RGS datasets.
 #'
-#' @return Shiny GUI or server
+#' @param id Namespace id.
+#' @param output Plot output.
+#' @param download Add download button.
+#' @param RGS Reactive value for the reference system.
+#' @param child Reactive value for children of parent RGS.
+#'
+#' @return Shiny GUI or server.
 #' @export
 plot_ui <- function(id, output = c("plot", "description"), download = TRUE) {
   tagList(

@@ -1,9 +1,12 @@
 #' Hierarchical table shiny module
 #'
-#' This module creates the table input and output.
+#' This module creates the table input and output as an
+#' \code{reactable::\link[reactable:reactable]{reactable}()}.
 #'
 #' @param id Namespace id.
 #' @param RGS Reactive value of the RGS data.
+#' @param select Add variable selection interface.
+#' @param download Add download button.
 #' @param labels Labels for hierarchical structure (default = \code{"Niveau "}.
 #'
 #' @return Shiny GUI or server
@@ -17,7 +20,7 @@ table_ui <- function(id, select, download = TRUE) {
     shinycssloaders::withSpinner(reactable::reactableOutput(NS(id,"table")))
     )
 }
-#' @rdname plot_ui
+#' @rdname table_ui
 #'
 #' @export
 table_server <- function(id, RGS, labels = "Niveau ") {

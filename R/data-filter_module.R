@@ -1,8 +1,12 @@
-#' Variable filtering
+#' Observation filtering
 #'
-#' @param id Namespace id
-#' @param RGS Reference
+#' GUI and server modules for filtering RGS datasets.
 #'
+#' @param id Namespace id.
+#' @param RGS Reactive value for the reference system.
+#' @param external Reactive value for children of parent RGS.
+#'
+#' @return Shiny GUI or server.
 #' @export
 filter_ui <- function(id) {
   tagList(

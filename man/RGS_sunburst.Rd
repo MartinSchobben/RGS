@@ -13,11 +13,13 @@ RGS_sunburst(
 parent_seeker(RGS = get_standard_business_reporting("Nederland"))
 }
 \arguments{
-\item{RGS}{}
+\item{RGS}{\href{https://www.referentiegrootboekschema.nl/}{Referentie GrootboekSchema}}
+
+\item{interactive}{Make plot interactive.}
 }
 \value{
-
+\code{ggplot2::\link[ggplot2:ggplot]{ggplot}()}
 }
 \description{
-Sunburst
+Sunburst plot for hierarchical data.
 }

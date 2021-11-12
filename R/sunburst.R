@@ -1,8 +1,11 @@
 #' Sunburst
 #'
-#' @param RGS
+#' Sunburst plot for hierarchical data.
 #'
-#' @return
+#' @param RGS \href{https://www.referentiegrootboekschema.nl/}{Referentie GrootboekSchema}
+#' @param interactive Make plot interactive.
+#'
+#' @return \code{ggplot2::\link[ggplot2:ggplot]{ggplot}()}
 #' @export
 RGS_sunburst <- function(
   RGS = parent_seeker(get_standard_business_reporting("Nederland")),
@@ -18,7 +21,7 @@ RGS_sunburst <- function(
 #' @export
 parent_seeker <- function(RGS = get_standard_business_reporting("Nederland")) {
 
-  ref_codes <- dplyr::pull(RGS, referentiecode)
+  ref_codes <- dplyr::pull(RGS, .data$referentiecode)
 
   # split of parent
   ls_par <- parent_seeker_(ref_codes)
@@ -58,7 +61,7 @@ add_weight <- function(RGS) {
   ls_RGS <- dplyr::select(RGS, .data$parent, .data$child) %>%
     dplyr::group_by(n = nchar(.data$parent)) %>%
     dplyr::group_split(.keep = FALSE) %>%
-    purrr::imap(function(x, n) dplyr::rename(x, "child_{n}" := child))
+    purrr::imap(function(x, n) dplyr::rename(x, "child_{n}" := .data$child))
 
   # names
   nm_child <- stringr::str_c("child_", 1:length(ls_RGS))
@@ -76,13 +79,13 @@ add_weight <- function(RGS) {
     ~dplyr::add_count(wide_RGS, !!rlang::sym(.x), name = paste0("weight", sub("[^0-9|_]*", "", .x))) %>%
       dplyr::select(last_col())
     ) %>%
-    dplyr::mutate(dplyr::across(.fns = ~.x / weight)) %>%
-    dplyr::select(-weight)
+    dplyr::mutate(dplyr::across(.fns = ~.x / .data$weight)) %>%
+    dplyr::select(-.data$weight)
 
   # recast to long format
-  long_weight <- tidyr::pivot_longer(RGS_wt, everything(), names_to = c(".value", "level"), names_sep = "_")
-  long_child <- tidyr::pivot_longer(dplyr::select(wide_RGS, -parent), everything(), names_to = c(".value", "level"), names_sep = "_")
-  weights <- dplyr::bind_cols(long_child, dplyr::select(long_weight, -level))
+  long_weight <- tidyr::pivot_longer(RGS_wt, tidyselect::everything(), names_to = c(".value", "level"), names_sep = "_")
+  long_child <- tidyr::pivot_longer(dplyr::select(wide_RGS, -.data$parent), tidyselect::everything(), names_to = c(".value", "level"), names_sep = "_")
+  weights <- dplyr::bind_cols(long_child, dplyr::select(long_weight, -.data$level))
 
   # distinct
   weights <- dplyr::distinct(weights, .data$child, .keep_all = TRUE)
@@ -139,7 +142,7 @@ textify_ <- function(RGS) {
       data = text_data,
       mapping = ggplot2::aes(
         x = 1.5,
-        y = ymid,
+        y = .data$ymid,
         label = .data$element
       ),
         # vjust = 1,

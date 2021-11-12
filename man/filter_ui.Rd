@@ -3,17 +3,22 @@
 \name{filter_ui}
 \alias{filter_ui}
 \alias{filter_server}
-\title{Variable filtering}
+\title{Observation filtering}
 \usage{
 filter_ui(id)
 
 filter_server(id, RGS, external = reactiveVal(NULL))
 }
 \arguments{
-\item{id}{Namespace id}
+\item{id}{Namespace id.}
 
-\item{RGS}{Reference}
+\item{RGS}{Reactive value for the reference system.}
+
+\item{external}{Reactive value for children of parent RGS.}
+}
+\value{
+Shiny GUI or server.
 }
 \description{
-Variable filtering
+GUI and server modules for filtering RGS datasets.
 }

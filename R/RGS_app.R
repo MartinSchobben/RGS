@@ -1,7 +1,11 @@
-#' Explore your data app
+#' Explore RGS data app
 #'
-#'@import shiny
-#'@export
+#' Shiny app for exploring of RGS
+#' (\href{https://www.referentiegrootboekschema.nl/}{Referentie GrootboekSchema})
+#' datasets.
+#'
+#' @return Shiny app.
+#' @export
 RGS_app <- function() {
   ui <- fluidPage(
     theme = bslib::bs_theme(bootswatch = "cerulean"),

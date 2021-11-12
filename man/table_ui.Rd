@@ -2,12 +2,19 @@
 % Please edit documentation in R/table_module.R
 \name{table_ui}
 \alias{table_ui}
+\alias{table_server}
 \title{Hierarchical table shiny module}
 \usage{
 table_ui(id, select, download = TRUE)
+
+table_server(id, RGS, labels = "Niveau ")
 }
 \arguments{
 \item{id}{Namespace id.}
+
+\item{select}{Add variable selection interface.}
+
+\item{download}{Add download button.}
 
 \item{RGS}{Reactive value of the RGS data.}
 
@@ -17,5 +24,6 @@ table_ui(id, select, download = TRUE)
 Shiny GUI or server
 }
 \description{
-This module creates the table input and output.
+This module creates the table input and output as an
+\code{reactable::\link[reactable:reactable]{reactable}()}.
 }

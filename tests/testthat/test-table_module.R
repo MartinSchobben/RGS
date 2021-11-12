@@ -7,21 +7,21 @@ RGS <- dplyr::select(
   .data$nivo
 )
 
-ui <- fluidPage(
-  table_ui("table")
-)
-
-server <- function(input, output, session) {
-  table_server(
-    "table",
-    reactiveVal(RGS)
-  )
-}
-
-# virtual sessions
-test_that("Can I select reference codes from plot", {
-  app <- shinytest::ShinyDriver$new(shinyApp(ui, server))
-})
+# ui <- fluidPage(
+#   table_ui("table", select = select_ui("select"))
+# )
+#
+# server <- function(input, output, session) {
+#   table_server(
+#     "table",
+#     reactiveVal(RGS)
+#   )
+# }
+#
+# # virtual sessions
+# test_that("Can I select reference codes from plot", {
+#   app <- shinytest::ShinyDriver$new(shinyApp(ui, server))
+# })
 
 test_that("drill down nesting", {
 

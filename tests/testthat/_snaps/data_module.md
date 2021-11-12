@@ -1,7 +1,7 @@
 # Loading the respective dataset and alter ui based on availability
 
     Code
-      data_ui("x")
+      input_ui("x")
     Output
       <div class="form-group shiny-input-container">
         <label class="control-label" id="x-dataset-label" for="x-dataset">

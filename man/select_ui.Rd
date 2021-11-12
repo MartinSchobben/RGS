@@ -14,6 +14,18 @@ select_server(
   default = c("omschrijving", "referentienummer")
 )
 }
+\arguments{
+\item{id}{Namespace id.}
+
+\item{RGS}{Reactive value for the reference system.}
+
+\item{ref_code}{Pre-selected variables (character string or vector).}
+
+\item{default}{Default variables (character string or vector).}
+}
+\value{
+Shiny GUI or server.
+}
 \description{
-Variable selection
+GUI and server modules for variable selection of RGS datasets.
 }

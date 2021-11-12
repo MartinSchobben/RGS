@@ -1,13 +1,10 @@
 test_that("Loading the respective dataset and alter ui based on availability", {
-  expect_snapshot(data_ui("x"))
+  expect_snapshot(input_ui("x"))
 })
 
 test_that("Server output based on available data", {
 
-  x <- reactiveVal()
-  testServer(data_server, args = list(RGS = x), {
-
-    x(get_standard_business_reporting("Nederland"))
+  testServer(input_server, {
 
     dataset <- session$getReturned()
 

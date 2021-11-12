@@ -1,6 +1,13 @@
 #' Variable selection
 #'
+#' GUI and server modules for variable selection of RGS datasets.
 #'
+#' @param id Namespace id.
+#' @param RGS Reactive value for the reference system.
+#' @param ref_code Pre-selected variables (character string or vector).
+#' @param default Default variables (character string or vector).
+#'
+#' @return Shiny GUI or server.
 #' @export
 select_ui <- function(id) {
   tagList(

@@ -1,5 +1,13 @@
-#' Dataset selection
+#' Dataset selection and output
 #'
+#' GUI and server modules for uploading and downloading RGS datasets.
+#'
+#' @param id Namespace id.
+#' @param filter Currently not supported.
+#' @param augmented Reactive value for the augmented dataset.
+#' @param n Number of download button (if multiple tabs exist).
+#'
+#' @return Shiny GUI or server.
 #' @export
 input_ui <- function(id, filter = NULL) {
 
