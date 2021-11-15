@@ -35,8 +35,7 @@ Imports:
     thematic (>= 0.1.2.1),
     tibble,
     tidyr,
-    tidyselect (>= 1.1.1),
-    translateR (>= 1.0)
+    tidyselect (>= 1.1.1)
 Depends: 
     R (>= 2.10)
 LazyData: true
