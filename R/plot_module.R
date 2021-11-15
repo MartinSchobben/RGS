@@ -121,7 +121,7 @@ plot_server <- function(id, RGS, child) {
     })
 
     # find children for reference code
-    observeEvent(selected(), {
+    observeEvent(selected(), { # eventreactive???
       if (nrow(rows()) > 0) {
         ref <- dplyr::pull(rows(), .data$referentiecode)[nrow(rows())]
         code <- find_children(parent(), ref)

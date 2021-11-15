@@ -54,3 +54,10 @@ test_that("drill down nesting", {
   # display
   expect_snapshot(display_data(nested, labels))
 })
+
+
+test_that("Test that columns of children of levels that don't exist do not appear",{
+
+  RGS_xc <- dplyr::filter(RGS, .data$nivo > 1)
+  expect_snapshot(reformat_data(RGS_xc))
+})
