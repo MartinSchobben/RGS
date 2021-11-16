@@ -52,9 +52,8 @@ plot_server <- function(id, RGS, child) {
 
   moduleServer(id, function(input, output, session) {
 
-    selected <- reactive({
-      input$plot_selected
-    })
+    # reactive plot
+    selected <- reactive(input$plot_selected)
 
     # initiate output table
     rows <- reactiveVal(tibble::tibble(NULL))
@@ -121,7 +120,7 @@ plot_server <- function(id, RGS, child) {
     })
 
     # find children for reference code
-    observeEvent(selected(), { # eventreactive???
+    observeEvent(selected(), {
       if (nrow(rows()) > 0) {
         ref <- dplyr::pull(rows(), .data$referentiecode)[nrow(rows())]
         code <- find_children(parent(), ref)
