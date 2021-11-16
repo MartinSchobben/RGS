@@ -12,10 +12,10 @@
 #' @return Shiny GUI or server
 #'
 #' @export
-table_ui <- function(id, select, download = TRUE) {
+table_ui <- function(id, select, download) {
   tagList(
     select,
-    if (isTRUE(download)) uiOutput(NS(id, "download")) else NULL,
+    download,#if (isTRUE(download)) uiOutput(NS(id, "download")) else NULL,
     tags$br(),
     shinycssloaders::withSpinner(reactable::reactableOutput(NS(id,"table")))
     )
@@ -41,7 +41,7 @@ table_server <- function(id, RGS, labels = "Niveau ") {
       )
     })
     # download button
-    output$download <- renderUI(output_ui("RGS", 2))
+    #output$download <- renderUI(output_ui("RGS", 2))
   })
 }
 

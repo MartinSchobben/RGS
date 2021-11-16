@@ -10,19 +10,23 @@
 #'
 #' @return Shiny GUI or server.
 #' @export
-plot_ui <- function(id, output = c("plot", "description"), download = TRUE) {
+plot_ui <- function(id, select = NULL, download, type = "default") {
+
+  if (type == "default") num <- 1 else num <- 2
+
   tagList(
     fluidRow(
       column(
         6,
         tags$br(),
+        select,
         shiny::fixedRow(
           actionButton(NS(id, "reset"), label = "Reset"),
           # actionButton(NS(id, "terug"), label = "Terug"),
-          if (isTRUE(download)) uiOutput(NS(id, "download")) else NULL
+          download
         ),
         ggiraph::ggiraphOutput(
-          NS(id, output[output == "plot"]),
+          NS(id,  paste0("plot", num)),
           width = "100%",
           height = "100%"
         )
@@ -32,10 +36,10 @@ plot_ui <- function(id, output = c("plot", "description"), download = TRUE) {
         tags$br(),
         wellPanel(
           h5("Referentiecode"),
-          tableOutput(NS(id, "reference")),
+          tableOutput(NS(id, paste0("reference", num))),
           tags$br(),
           tags$br(),
-          tableOutput(NS(id, output[output == "description"]))
+          tableOutput(NS(id, paste0("description", num)))
         )
       )
     )
@@ -56,6 +60,10 @@ plot_server <- function(id, RGS, child) {
       input$plot_selected
     })
 
+    # which tabpanel are we at?
+    # observeEvent(input$tabs, {
+    #   if (input$tabs=="Voorbeeld") {
+
     # initiate output table
     rows <- reactiveVal(tibble::tibble(NULL))
 
@@ -63,7 +71,7 @@ plot_server <- function(id, RGS, child) {
     parent <- reactive(parent_seeker(RGS()))
 
     # plot
-    output$plot <-  ggiraph::renderGirafe({
+    output$plot1 <- ggiraph::renderGirafe({
       suppressWarnings(
         ggiraph::girafe(
           code = print(RGS_sunburst(parent())),
@@ -84,7 +92,7 @@ plot_server <- function(id, RGS, child) {
       })
 
     # only select description for output table
-    output$description <- renderTable({
+    output$description1 <- renderTable({
       if(nrow(rows()) < 1) {
         NULL
       } else {
@@ -92,17 +100,15 @@ plot_server <- function(id, RGS, child) {
           rows(),
           Niveau = .data$nivo,
           Omschrijving = .data$omschrijving
-          )
+        )
       }
     },
     digits = 0
     )
-
-    # download button
-    output$download <- renderUI(output_ui("RGS", 1))
+    output$description2 <- renderTable({tibble::tibble(x = 11)})
 
     # referentiecode
-    output$reference <- renderTable(ref_output(selected()))
+    output$reference1 <- output$reference2 <- renderTable(ref_output(selected()))
 
     # reset
     observeEvent(input$reset, {

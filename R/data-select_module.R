@@ -17,15 +17,16 @@ select_ui <- function(id) {
       choices = NULL,
       multiple = TRUE,
       width = "75%"
-    )#,
-    #download_ui("RGS")
+    )
   )
 }
 #' @rdname select_ui
 #'
 #' @export
 select_server <- function(id, RGS, ref_code = c("referentiecode", "nivo"),
-                          default = c("omschrijving", "referentienummer")) {
+                          default = c("omschrijving", "referentienummer"),
+                          additional = c("sortering", "omschrijving_verkort",
+                                         "referentie_omslagcode")) {
 
   stopifnot(is.reactive(RGS))
 
@@ -38,13 +39,13 @@ select_server <- function(id, RGS, ref_code = c("referentiecode", "nivo"),
       updateSelectInput(
         session,
         "var",
-        choices =  def_vars(),
+        choices =  c(def_vars(), additional),
         selected =  def_vars()
       )
     })
 
     # custom selection
-    reactive(dplyr::select(RGS(),  ref_code, input$var))
+    reactive(dplyr::select(RGS(), ref_code, input$var))
 
   })
 }

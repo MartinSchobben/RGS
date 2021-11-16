@@ -16,18 +16,17 @@ filter_ui <- function(id) {
       choices = c(credit = "C", debet = "D"),
       selected = c("C", "D"),
       inline = TRUE
-      ),
+    ),
     sliderInput(
       NS(id, "level"),
       h5("Niveau"),
       min = 1,
       max = 5,
       value = c(1, 5)
-      ),
+    ),
     uiOutput(NS(id, "controls"))
-
-    )
-  }
+  )
+}
 #' @rdname filter_ui
 #'
 #' @export
@@ -39,20 +38,21 @@ filter_server <- function(id, RGS, external = reactiveVal(NULL)) {
   moduleServer(id, function(input, output, session) {
 
     # make check boxes for company type
-    lgl_vars <- reactive(
+    lgl_vars <- reactive({
       dplyr::select(
         RGS(),
         tidyselect::vars_select_helpers$where(is.logical)
         ) %>%
         colnames()
-      )
+      })
+
     output$controls <- renderUI({
       selectizeInput(
         NS(id, "dynamic"),
-        h5("Bedrijfstype"),
+        h5("Rechtsvorm/sector"),
         choices = lgl_vars(),
         options = list(
-          placeholder = "Selecteer een bedrijfstype",
+          placeholder = "Selecteer een rechtsvorm/sector",
           onInitialize = I('function() { this.setValue(""); }')
         )
       )
@@ -66,6 +66,7 @@ filter_server <- function(id, RGS, external = reactiveVal(NULL)) {
         dplyr::between(.data$nivo, input$level[1], input$level[2]),
         !!! rlang::syms(input$dynamic)
         )
+      # This filter according to the plot selection or example case
       if (!is.null(external())) {
         x <- dplyr::filter(x, .data$referentiecode %in% external())
       }
