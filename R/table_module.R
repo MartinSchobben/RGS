@@ -46,7 +46,7 @@ table_server <- function(id, RGS, labels = "Niveau ") {
 }
 
 # function to reformat the RGS data to include hierarchical structure
-reformat_data <- function(RGS, labels = "Niveau ") {
+reformat_data <- function(RGS, labels = "Niveau ", bind = TRUE) {
 
   # find children
   refs <- dplyr::pull(RGS, .data$referentiecode)
@@ -61,14 +61,17 @@ reformat_data <- function(RGS, labels = "Niveau ") {
   lvls <- unique(RGS$nivo)
 
   # splice splitted reference code according to hierarchical structure
-  splits <- purrr::accumulate(as.list(chunks), stringr::str_c)[lvls] %>%
-      tibble::as_tibble()
+  splits <- purrr::accumulate(as.list(chunks), stringr::str_c)[lvls]
 
   # nesting
-  dplyr::bind_cols(
-    splits,
-    tidyr::replace_na(RGS, list(referentienummer = 0))
+  if (isTRUE(bind)) {
+    dplyr::bind_cols(
+      tibble::as_tibble(splits),
+      tidyr::replace_na(RGS, list(referentienummer = 0))
     )
+  } else {
+    splits
+  }
 }
 
 # get the data ready for table output

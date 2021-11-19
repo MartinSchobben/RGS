@@ -8,7 +8,7 @@
 #' @return \code{ggplot2::\link[ggplot2:ggplot]{ggplot}()}
 #' @export
 RGS_sunburst <- function(
-  RGS = parent_seeker(get_standard_business_reporting("Nederland")),
+  RGS = get_standard_business_reporting("Nederland"),
   interactive = TRUE
   ) {
 
@@ -55,47 +55,22 @@ parent_code <- function(code, parent = TRUE, label = "child_") {
 }
 
 # assess weight of univariate categorical variable with hierarchical structure
-add_weight <- function(RGS) {
+add_weight <- function(RGS, label = "child_") {
 
-  # split groups and rename child to depth in tree
-  ls_RGS <- dplyr::select(RGS, .data$parent, .data$child) %>%
-    dplyr::group_by(n = nchar(.data$parent)) %>%
-    dplyr::group_split(.keep = FALSE) %>%
-    purrr::imap(function(x, n) dplyr::rename(x, "child_{n}" := .data$child))
-
-  # names
-  nm_child <- stringr::str_c("child_", 1:length(ls_RGS))
-
-  # recast as wide data frame
-  wide_RGS <- purrr::reduce2(
-    ls_RGS,
-    purrr::map(nm_child[-length(nm_child)], ~rlang::set_names("parent", .)),
-    dplyr::left_join,
-  )
+  # rename to depth in tree
+  vc_RGS <- reformat_data(RGS, labels = label, bind = FALSE)
 
   # add counts and normalise to total count of maximum depth in the tree
-  RGS_wt <- purrr::map_dfc(
-    c("parent", nm_child),
-    ~dplyr::add_count(wide_RGS, !!rlang::sym(.x), name = paste0("weight", sub("[^0-9|_]*", "", .x))) %>%
-      dplyr::select(last_col())
-    ) %>%
-    dplyr::mutate(dplyr::across(.fns = ~.x / .data$weight)) %>%
-    dplyr::select(-.data$weight)
+  weights <- purrr::map(vc_RGS, ~{table(.x)/length(.x)}) %>% purrr::flatten_dbl()
 
-  # recast to long format
-  long_weight <- tidyr::pivot_longer(RGS_wt, tidyselect::everything(), names_to = c(".value", "level"), names_sep = "_")
-  long_child <- tidyr::pivot_longer(dplyr::select(wide_RGS, -.data$parent), tidyselect::everything(), names_to = c(".value", "level"), names_sep = "_")
-  weights <- dplyr::bind_cols(long_child, dplyr::select(long_weight, -.data$level))
-
-  # distinct
-  weights <- dplyr::distinct(weights, .data$child, .keep_all = TRUE)
-  dplyr::left_join(RGS, weights, by = "child")
+  # add weight to df
+  dplyr::mutate(RGS, weight = dplyr::recode(.data$referentiecode, !!!weights))
 }
 
 # create plot element (rectangles) vectorised
 rectify <- function(RGS, n_max = 1, interactive) {
 
-  ls_RGS <- dplyr::group_by(RGS, n = nchar(.data$child)) %>%
+  ls_RGS <- dplyr::group_by(RGS, n = nchar(.data$referentiecode)) %>%
     dplyr::group_split()
   rect_init <- rectify_(ls_RGS[[1]], n = 0, interactive = interactive)
   text_init <- textify_(ls_RGS[[1]])
@@ -119,11 +94,11 @@ rectify <- function(RGS, n_max = 1, interactive) {
 
 # summarise
 transform_stat <-  function(RGS) {
-  dplyr::group_by(RGS, .data$child) %>%
+  dplyr::group_by(RGS, .data$referentiecode) %>%
     dplyr::summarise(
       tot_weight = sum(.data$weight),
       omschrijving = unique(.data$omschrijving),
-      element = parent_seeker_(.data$child) %>% purrr::map_chr(~tail(.x, n= 1))
+      element = parent_seeker_(.data$referentiecode) %>% purrr::map_chr(~tail(.x, n= 1))
     ) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(
@@ -167,9 +142,9 @@ rectify_ <- function(RGS, n = 1, interactive, alpha = 1) {
         xmax = 2 + {{n}},
         ymin = .data$ymin,
         ymax = .data$ymax,
-        fill = .data$child,
+        fill = .data$referentiecode,
         tooltip = .data$omschrijving,
-        data_id = .data$child
+        data_id = .data$referentiecode
         ),
       alpha = alpha,
       color = "white",
@@ -183,7 +158,7 @@ rectify_ <- function(RGS, n = 1, interactive, alpha = 1) {
         xmax = 2 + {{n}},
         ymin = .data$ymin,
         ymax = .data$ymax,
-        fill = .data$child
+        fill = .data$referentiecode
         ),
       alpha = alpha,
       color = "white",
