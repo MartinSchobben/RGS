@@ -137,20 +137,25 @@ transform_stat <-  function(RGS) {
 textify_ <- function(RGS) {
 
   text_data <- transform_stat(RGS)
-  suppressWarnings(
-    ggrepel::geom_text_repel(
+  list(
+    ggplot2::geom_text(
       data = text_data,
       mapping = ggplot2::aes(
-        x = 1.5,
+        x = 2.5,
         y = .data$ymid,
         label = .data$element
       ),
+      check_overlap = TRUE,
         # vjust = 1,
         # hjust = 1
         # direction = "y",
-        force = 2,
-        size = 6
-    )
+        # force = 2,
+      size = 6)
+    # ),
+    # ggplot2::geom_segment(
+    #   data = text_data,
+    #   mapping = ggplot2::aes(x = 1.5, xend =2.5, y = .data$ymid, yend = .data$ymid)
+    # )
   )
 
 }
@@ -193,7 +198,7 @@ rectify_ <- function(RGS, n = 1, interactive, alpha = 1) {
 }
 
 # make final plot
-pie_baker <- function(rects, lab = FALSE) {
+pie_baker <- function(rects, lab = FALSE, facet = NULL) {
 
   p <- ggplot2::ggplot() +
     rects +
@@ -202,8 +207,10 @@ pie_baker <- function(rects, lab = FALSE) {
     ggplot2::coord_polar(theta = "y")
 
   if (isTRUE(lab)) {
-    p + ggplot2::labs(title = "Referentie GrootboekSchema") }
-  else {
-    p
+    p <- p + ggplot2::labs(title = "Referentie GrootboekSchema")
+    }
+  if (!is.null(facet)) {
+    p <- p + ggplot2::facet_wrap(ggplot2::vars(facet))
   }
+  p
 }

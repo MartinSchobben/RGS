@@ -13,17 +13,23 @@ RGS_app <- function() {
     sidebarLayout(
       sidebarPanel(
         input_ui("RGS", is.data.frame),
+        selectInput(
+          NS("plot", "modus"),
+          h5("Zoek opties"),
+          choices = c("Referentiecodes" = "code", "Voorbeelden" = "example")
+        ),
         filter_ui("filter")
         ),
       mainPanel(
         tabsetPanel(
-          #id = NS("plot", "tabs"),
+          id = "tabs",
           tabPanel(
             "Grafiek",
             plot_ui(
               "plot",
               download = output_ui("RGS", 1)
-            )
+            ),
+            value = "code"
           ),
           tabPanel(
             "Tabel",
@@ -31,19 +37,6 @@ RGS_app <- function() {
               "table",
               select = select_ui("select"),
               download = output_ui("RGS", 2)
-            )
-          ),
-          tabPanel(
-            "Voorbeeld",
-            plot_ui(
-              "plot",
-              select = selectInput(
-                "daybook",
-                h5("Dagboek"),
-                choices = c(Verkoop = "sales")
-              ),
-              download = output_ui("RGS", 3),
-              type = "daybook"
             )
           )
         )
@@ -55,7 +48,7 @@ RGS_app <- function() {
 
     # initiate
     child <- reactiveVal(NULL)
-    observe(message(glue::glue("{child()}")))
+    #observe(message(glue::glue("{child()}")))
 
     # original data
     RGS <- input_server("RGS")
@@ -69,7 +62,7 @@ RGS_app <- function() {
     # table
     table_server("table", var)
     # download
-    output_server("RGS", var, 2)
+    output_server("RGS", var, 3)
 
   }
   shinyApp(ui, server)

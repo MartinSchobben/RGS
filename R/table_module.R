@@ -14,10 +14,33 @@
 #' @export
 table_ui <- function(id, select, download) {
   tagList(
-    select,
-    download,#if (isTRUE(download)) uiOutput(NS(id, "download")) else NULL,
+    fixedRow(select),
+    fixedRow(
+      selectInput(
+        NS(id, "niveau"),
+        h6("Niveau"),
+        choices = "",
+        width = "30%"
+      ),
+      selectInput(
+        NS(id, "ref"),
+        h6("Referentiecode"),
+        choices = "",
+        width = "30%"
+      ),
+      textInput(
+        NS(id, "label"),
+        h6("Label"),
+        width = "30%"
+      )
+    ),
+    fixedRow(
+      download,
+      actionButton(NS(id, "add"), "Voeg label toe")
+    ),
     tags$br(),
-    shinycssloaders::withSpinner(reactable::reactableOutput(NS(id,"table")))
+    shinycssloaders::withSpinner(reactable::reactableOutput(NS(id,"table"))),
+    tableOutput(NS(id, "table2"))
     )
 }
 #' @rdname table_ui
@@ -30,8 +53,33 @@ table_server <- function(id, RGS, labels = "Niveau ") {
 
   moduleServer(id, function(input, output, session) {
 
+
+    # update
+    observe({
+      updateSelectInput(session, "ref", choices = unique(nested()[[1]]))
+      updateSelectInput(session, "niveau", choices = colnames(nested())[stringr::str_detect(colnames(nested()), labels)])
+      #message(glue::glue("{colnames(nested())[stringr::str_detect(colnames(nested()), labels)]}"))
+    })
+
     # reformat to include hierarchy
-    nested <- reactive(reformat_data(RGS()))
+    nested <- reactive({reformat_data(RGS())})
+
+    # add new label
+    newtb <- reactive({
+      dplyr::mutate(
+        nested(),
+        label =
+          dplyr::if_else(
+            !! input$niveau == !! input$ref,
+            input$label,
+            NA_character_
+            )
+      )
+    }) %>%
+      bindCache(input$niveau, input$ref, input$label) %>%
+      bindEvent(input$add, ignoreInit = TRUE)
+
+    output$table2 <-renderTable(newtb())
 
     # table output with nested data structure
     output$table <- reactable::renderReactable({
@@ -58,7 +106,7 @@ reformat_data <- function(RGS, labels = "Niveau ") {
     )
 
   # levels
-  lvls <- unique(RGS$nivo)
+  lvls <- unique(RGS$nivo) %>% sort()
 
   # splice splitted reference code according to hierarchical structure
   splits <- purrr::accumulate(as.list(chunks), stringr::str_c)[lvls] %>%

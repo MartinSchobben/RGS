@@ -10,23 +10,21 @@
 #'
 #' @return Shiny GUI or server.
 #' @export
-plot_ui <- function(id, select = NULL, download, type = "default") {
-
-  if (type == "default") num <- 1 else num <- 2
+plot_ui <- function(id, select = NULL, download) {
 
   tagList(
     fluidRow(
       column(
         6,
         tags$br(),
-        select,
+        uiOutput(NS(id, "example")),
         shiny::fixedRow(
           actionButton(NS(id, "reset"), label = "Reset"),
           # actionButton(NS(id, "terug"), label = "Terug"),
           download
         ),
         ggiraph::ggiraphOutput(
-          NS(id,  paste0("plot", num)),
+          NS(id,  "plot"),
           width = "100%",
           height = "100%"
         )
@@ -36,10 +34,10 @@ plot_ui <- function(id, select = NULL, download, type = "default") {
         tags$br(),
         wellPanel(
           h5("Referentiecode"),
-          tableOutput(NS(id, paste0("reference", num))),
+          tableOutput(NS(id, "reference")),
           tags$br(),
           tags$br(),
-          tableOutput(NS(id, paste0("description", num)))
+          tableOutput(NS(id, "description"))
         )
       )
     )
@@ -57,11 +55,23 @@ plot_server <- function(id, RGS, child) {
   moduleServer(id, function(input, output, session) {
 
     # reactive plot
-    selected <- reactive(input$plot_selected)
+    selected <- reactive({input$plot_selected})
 
-    # which tabpanel are we at?
-    # observeEvent(input$tabs, {
-    #   if (input$tabs=="Voorbeeld") {
+    # If "voorbeeld" then a fixed child is needed.
+    observeEvent(input$modus, {
+      if (input$modus == "example") {
+        child(union(child(), examples$fixed))
+        output$example <- renderUI({
+          selectInput(
+            NS(id, "daybook"),
+            h5("Dagboek"),
+            choices = c(Verkoop = "sales")
+          )
+        })
+      } else if (input$modus == "code") {
+        child(NULL)
+      }
+    })
 
     # initiate output table
     rows <- reactiveVal(tibble::tibble(NULL))
@@ -70,7 +80,7 @@ plot_server <- function(id, RGS, child) {
     parent <- reactive(parent_seeker(RGS()))
 
     # plot
-    output$plot1 <- ggiraph::renderGirafe({
+    output$plot <- ggiraph::renderGirafe({
       suppressWarnings(
         ggiraph::girafe(
           code = print(RGS_sunburst(parent())),
@@ -84,14 +94,15 @@ plot_server <- function(id, RGS, child) {
             ggiraph::opts_selection(
               type = "single",
               css = "fill:#FF3333;stroke:black;"
-              )
             )
           )
         )
-      })
+      )
+    })
+
 
     # only select description for output table
-    output$description1 <- renderTable({
+    output$description <- renderTable({
       if(nrow(rows()) < 1) {
         NULL
       } else {
@@ -104,34 +115,33 @@ plot_server <- function(id, RGS, child) {
     },
     digits = 0
     )
-    output$description2 <- renderTable({tibble::tibble(x = 11)})
+
 
     # referentiecode
-    output$reference1 <- output$reference2 <- renderTable(ref_output(selected()))
+    output$reference <- renderTable({ref_output(selected())})
 
     # reset
-    observeEvent(input$reset, {
-      session$reload()
-     })
+    observeEvent(input$reset, {session$reload()})
 
     # update output table
     observeEvent(selected(), {
       # stop adding rows at terminal node but replace them
-      obs <- dplyr::filter(RGS(), .data$referentiecode %in% selected())
-      if (!identical(find_children(parent(),selected()), child())) {
-        rows(dplyr::bind_rows(rows(), obs))
-      } else {
-        rows(dplyr::rows_upsert(rows(), obs, by = "nivo"))
-      }
-    })
+        obs <- dplyr::filter(RGS(), .data$referentiecode %in% selected())
+        if (!selected() %in% find_children(parent(), selected())) {
+          rows(dplyr::bind_rows(rows(), obs))
+        } else {
+          rows(dplyr::rows_upsert(rows(), obs, by = "nivo"))
+        }
+      })
 
-    # find children for reference code
+    # find children for reference code based on example and plot
     observeEvent(selected(), {
       if (nrow(rows()) > 0) {
         ref <- dplyr::pull(rows(), .data$referentiecode)[nrow(rows())]
         code <- find_children(parent(), ref)
         child(code)
       }
+      # message(glue::glue("{child()}"))
     })
 
     # return children for reference code

@@ -13,10 +13,10 @@ select_ui <- function(id) {
   tagList(
     selectInput(
       NS(id, "var"),
-      h5("Selecteer kolom"),
+      h6("Selecteer kolom"),
       choices = NULL,
       multiple = TRUE,
-      width = "75%"
+      width = "66%"
     )
   )
 }

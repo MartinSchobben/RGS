@@ -75,3 +75,10 @@ test_that("Find children", {
     alternative_extract(pattern = "BIvaKouVvp")
   )
 })
+
+tb_xc <- dplyr::filter(
+  get_standard_business_reporting("Nederland"),
+  .data$referentiecode %in% examples$fixed
+  )
+
+reformat_data(tb_xc) %>% dplyr::select(tidyselect::starts_with("Niveau")&where(~{all(!is.na(.x))})) %>% unique()

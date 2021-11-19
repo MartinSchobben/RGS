@@ -6,9 +6,16 @@ code_refs <- tibble::tibble(
 )
 
 # code to prepare `examples` dataset
+
+# omzet belasting codes
+code_btw <- dplyr::filter(
+  RGS::get_standard_business_reporting("Nederland"),
+  stringr::str_detect(.data$referentiecode, "^WOmz")
+  ) %>% dplyr::pull(.data$referentiecode)
+
 examples <- tibble::tibble(
   daybook = "sales",
-  fixed = c("BVorDebHad", "BSchBepBtw")
+  fixed = c("BVorDebHad", "BSchBepBtw", code_btw)
 )
 
 usethis::use_data(code_refs, overwrite = TRUE)
