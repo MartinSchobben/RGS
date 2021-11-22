@@ -18,7 +18,7 @@ plot_ui <- function(id, output = c("plot", "description"), download = TRUE) {
         tags$br(),
         shiny::fixedRow(
           actionButton(NS(id, "reset"), label = "Reset"),
-          actionButton(NS(id, "terug"), label = "Terug"),
+          actionButton(NS(id, "back"), label = "Terug"),
           if (isTRUE(download)) uiOutput(NS(id, "download")) else NULL
         ),
         ggiraph::ggiraphOutput(
@@ -44,20 +44,17 @@ plot_ui <- function(id, output = c("plot", "description"), download = TRUE) {
 #' @rdname plot_ui
 #'
 #' @export
-plot_server <- function(id, RGS, child) {
+plot_server <- function(id, RGS) {
 
   # check for reactive
   stopifnot(is.reactive(RGS))
-  stopifnot(is.reactive(child))
+  # stopifnot(is.reactive(parent))
 
   moduleServer(id, function(input, output, session) {
 
     # initiate output table and selection
     rows <- reactiveVal(tibble::tibble(NULL))
     selected <- reactiveVal(NULL)
-
-    # reactive plot selection
-    observe({selected(input$plot_selected)})
 
     # plot
     output$plot <-  ggiraph::renderGirafe({
@@ -80,34 +77,31 @@ plot_server <- function(id, RGS, child) {
         )
       })
 
+    # reactive plot selection
+    observe(selected(input$plot_selected))
+
     # only select description for output table
     output$description <- renderTable({
-      if(nrow(rows()) < 1) {
+      if(nrow(rows()) == 0) {
         NULL
       } else {
         dplyr::select(
           rows(),
           Niveau = .data$nivo,
           Omschrijving = .data$omschrijving
-          )
+        )
       }
     },
     digits = 0
     )
 
-    # download button
-    output$download <- renderUI(output_ui("RGS", 1))
-
-    # referentiecode
-    output$reference <- renderTable(ref_output(selected()))
-
-    # reset
-    observeEvent(input$reset, {session$reload()})
+    observe(message(glue::glue("obs: {nrow(RGS())} and {selected()} ")))
 
     # update output table
     observeEvent(selected(), {
       # stop adding rows at terminal node but replace them
       obs <- dplyr::filter(RGS(), .data$referentiecode %in% selected())
+
       if (!selected() %in% find_children(RGS(), selected())) {
         rows(dplyr::bind_rows(rows(), obs))
       } else {
@@ -115,15 +109,39 @@ plot_server <- function(id, RGS, child) {
       }
     })
 
+    # download button
+    output$download <- renderUI({output_ui("RGS", 1)})
+
+    # referentiecode
+    output$reference <- renderTable({ref_output(selected())})
+
+    # reset
+    observeEvent(input$reset, {session$reload()})
 
     # return to parent if return button clicked
-    observeEvent(input$terug, {
-      selected(parent_code(parent_seeker_(selected())[[1]]))
-      rows(rows()[-nrow(rows()),])
+    observeEvent(input$back, {
+      # unselect plot
+      # session$sendCustomMessage(type = 'plot_set', message = character(0))
+      # update selected ref code
+      if (rows()$terminal[nrow(rows())]) {
+        selected(find_parents(find_parents(selected())))
+      } else {
+        selected(find_parents(selected()))
+      }
+
+      # update table
+      if (nrow(rows()) == 1) {
+        rows(tibble::tibble(NULL))
+      } else if (rows()$terminal[nrow(rows())]) {
+        rows(rows()[(-nrow(rows()) : -(nrow(rows()) - 1)),]) # 2 rows
+      } else {
+        rows(rows()[-nrow(rows()),]) # 1 row
+      }
     })
 
-    # return children for reference code
-    reactive({child(selected())})
+
+    # return selection for reference code filtering
+    selected
 
   })
 }
@@ -143,13 +161,19 @@ find_children <- function(
     stringr::str_detect(.data$referentiecode, pattern)
     ) %>%
     dplyr::pull(.data$referentiecode)
-  # if no more children short cut and return original group of children
+  # if no more children short cut and return original group of parents
   if (length(children) == 0) {
-    return(find_children(RGS, parent_code(parent_seeker_(parent)[[1]])))
+    return(find_children(RGS, find_parents(parent)))
   } else {
     return(children)
   }
 }
+
+find_parents <- function(child) {
+  parent <- parent_code(parent_seeker_(child)[[1]])
+  if (parent == "") NULL else parent
+}
+
 
 ref_output <- function(reference = "BIva", filter_ref = NULL) {
   # short cut

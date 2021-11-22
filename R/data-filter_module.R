@@ -20,12 +20,11 @@ filter_ui <- function(id) {
     sliderInput(
       NS(id, "level"),
       h5("Niveau"),
-      min = 1,
+      min = 2,
       max = 5,
-      value = c(1, 5)
+      value = 5
       ),
     uiOutput(NS(id, "controls"))
-
     )
   }
 #' @rdname filter_ui
@@ -62,20 +61,32 @@ filter_server <- function(id, RGS, external) {
     # find children for selected
     child <- reactive({find_children(RGS(), external())})
 
-    observe(message(glue::glue("{child()}")))
+    # check whether plot selection extents beyond slider level input
+    observeEvent(external(), {
+      min_sl <- dplyr::filter(RGS(), .data$referentiecode == external())$nivo
+      message(glue::glue("{min_sl}"))
+      updateSliderInput(
+        session,
+        "level",
+        # value = min_sl,
+        min = min_sl,
+        max = 5
+      )
+    })
 
     # filter the dataset
     reactive({
       x <- dplyr::filter(
         RGS(),
         .data$d_c %in% input$direction | is.na(.data$d_c),
-        dplyr::between(.data$nivo, input$level[1], input$level[2]),
+        .data$nivo <= input$level,
         !!! rlang::syms(input$dynamic)
         )
       if (!is.null(external())) {
         x <- dplyr::filter(x, .data$referentiecode %in% child())
       }
-      x
+      # find terminal nodes
+      endnote_seeker(x)
       })
   })
 }

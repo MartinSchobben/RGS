@@ -33,19 +33,21 @@ RGS_app <- function() {
   server <- function(input, output, session) {
     thematic::thematic_shiny()
 
-    # initiate
-    child <- reactiveVal(NULL)
-    observe(message(glue::glue("{child()}")))
+    # initiate plot selection (parent)
+    parent <- reactiveVal(NULL)
+    # observe(message(glue::glue("{parent()}")))
 
     # original data
     RGS <- input_server("RGS")
 
-    # transforms
-    filter <- filter_server("filter", RGS, child)
+    # transforms and find children of parent
+    filter <- filter_server("filter", RGS, parent)
     var <- select_server("select", filter)
 
     # plot
-    child <- plot_server("plot", filter, child)
+    x <- plot_server("plot", filter)
+    observe({parent(x())})
+
     # table
     table_server("table", var)
     # download

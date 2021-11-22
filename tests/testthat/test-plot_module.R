@@ -1,16 +1,15 @@
-ui <- fluidPage(
-  plot_ui("plot", download = input_ui("RGS", 1))
-)
-
-server <- function(input, output, session) {
-  plot_server(
-    "plot",
-    reactiveVal(get_standard_business_reporting("Nederland")),
-    reactiveVal(get_standard_business_reporting("Nederland")$referentiecode)
-    )
-}
-
-# virtual sessions
+# ui <- fluidPage(
+#   plot_ui("plot", download = input_ui("RGS", 1))
+# )
+#
+# server <- function(input, output, session) {
+#   plot_server(
+#     "plot",
+#     reactiveVal(get_standard_business_reporting("Nederland") %>% endnote_seeker())
+#     )
+# }
+#
+# #virtual sessions
 # test_that("Can I select reference codes from plot", {
 #   app <- shinytest::ShinyDriver$new(shinyApp(ui, server))
 #   # click plot reset
@@ -18,25 +17,47 @@ server <- function(input, output, session) {
 #   expect_equal(app$getValue("reset"), 1)
 #   })
 
+
 # server only
 test_that("Sever output based on figure selection", {
   x <- reactiveVal()
-  y <- reactiveVal()
-  testServer(plot_server, args = list(RGS = x, child = y), {
+  testServer(plot_server, args = list(RGS = x), {
+    # data
     x(get_standard_business_reporting("Nederland"))
-    y(get_standard_business_reporting("Nederland")$referentiecode)
 
+    # successive selection on the plot
+    session$setInputs(plot_selected = "B")
+    session$flushReact()
+    session$setInputs(plot_selected = "BIva")
+    session$flushReact()
+    session$setInputs(plot_selected = "BIvaKou")
+    session$flushReact()
+    session$setInputs(plot_selected = "BIvaKouVvp")
+    session$flushReact()
+    session$setInputs(plot_selected = "BIvaKouVvpDes")
     session$flushReact()
 
-    # select something on the plot
-    session$setInputs(plot_selected = "BFvaOvr")
-    expect_equal(
-      session$returned(),
-      find_children(
-        get_standard_business_reporting("Nederland"),
-        "BFvaOvr"
-        )
-      )
+    # print
+    print(session$returned())
+    # print(output$reference)
+    # print(selected())
+    # print(rows())
+
+    # terminal point returns parent
+    expect_equal(session$returned(), "BIvaKouVvpDes")
+    expect_snapshot(output$reference)
+    expect_equal(selected(), "BIvaKouVvpDes")
+    expect_snapshot(rows())
+
+    # go back one layer with "Terug" button
+    session$setInputs(back = 0)
+    session$flushReact()
+    expect_equal(session$returned(), "BIvaKouVvp")
+    expect_snapshot(output$reference)
+    expect_equal(selected(), "BIvaKouVvp")
+    expect_snapshot(rows())
+    # print
+    print(session$returned())
   })
 })
 

@@ -34,10 +34,7 @@ input_server <- function(id) {
   moduleServer(id, function(input, output, session) {
 
     # input data
-    RGS <- reactive(get_standard_business_reporting(input$dataset))
-
-    # find terminal nodes
-    reactive({endnote_seeker(RGS())})
+    reactive(get_standard_business_reporting(input$dataset))
 
   })
 }
@@ -92,16 +89,21 @@ endnote_seeker <- function(RGS) {
   max_nodes <- length(ls_codes)
   upper_nodes <- ls_codes[[max_nodes]]  %>% .[!is.na(.)]
   upper_nodes <- rlang::rep_named(upper_nodes, TRUE)
-  # intermediate nodes can also have terminal nodes
 
-  end <- purrr::map(1:(max_nodes - 1), ~terminator(ls_codes, index = .x)) %>%
-    purrr::flatten_lgl() %>%
-    append(upper_nodes)
+  # intermediate nodes can also have terminal nodes
+  if (max_nodes > 1) {
+    upper_nodes <- purrr::map(
+      1:(max_nodes - 1),
+      ~terminator(ls_codes, index = .x)
+      ) %>%
+      purrr::flatten_lgl() %>%
+      append(upper_nodes)
+  }
 
   # add to original
   dplyr::mutate(
     RGS,
-    terminal = dplyr::recode(.data$referentiecode, !!! end)
+    terminal = dplyr::recode(.data$referentiecode, !!! upper_nodes)
   )
 }
 
