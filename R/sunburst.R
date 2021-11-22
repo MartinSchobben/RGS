@@ -56,7 +56,7 @@ add_weight <- function(RGS, label = "child_") {
   vc_RGS <- reformat_data(RGS, labels = label, bind = FALSE)
 
   # add counts and normalise to total count of maximum depth (terminal nodes only) in the tree
-  weights <- purrr::map(vc_RGS, ~add_weight_(.x, y = RGS$terminal)) %>%
+  weights <- purrr::map(vc_RGS, ~add_weight_(.x[RGS$terminal], y = RGS$terminal)) %>%
     purrr::flatten_dbl()
 
   # add weight to df
