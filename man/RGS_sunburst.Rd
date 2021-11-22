@@ -2,15 +2,15 @@
 % Please edit documentation in R/sunburst.R
 \name{RGS_sunburst}
 \alias{RGS_sunburst}
-\alias{parent_seeker}
+\alias{parent_seeker_}
 \title{Sunburst}
 \usage{
 RGS_sunburst(
-  RGS = parent_seeker(get_standard_business_reporting("Nederland")),
+  RGS = get_standard_business_reporting("Nederland"),
   interactive = TRUE
 )
 
-parent_seeker(RGS = get_standard_business_reporting("Nederland"))
+parent_seeker_(code)
 }
 \arguments{
 \item{RGS}{\href{https://www.referentiegrootboekschema.nl/}{Referentie GrootboekSchema}}

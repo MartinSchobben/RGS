@@ -35,6 +35,7 @@ RGS_app <- function() {
 
     # initiate
     child <- reactiveVal(NULL)
+    observe(message(glue::glue("{child()}")))
 
     # original data
     RGS <- input_server("RGS")

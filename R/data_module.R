@@ -34,7 +34,10 @@ input_server <- function(id) {
   moduleServer(id, function(input, output, session) {
 
     # input data
-    reactive(get_standard_business_reporting(input$dataset))
+    RGS <- reactive(get_standard_business_reporting(input$dataset))
+
+    # find terminal nodes
+    reactive({endnote_seeker(RGS())})
 
   })
 }
@@ -80,4 +83,42 @@ get_countrycode <- function(country) {
     origin = 'country.name',
     destination = 'iso2c'
     )
+}
+
+# find terminal nodes
+endnote_seeker <- function(RGS) {
+  ls_codes <- reformat_data(RGS, bind = FALSE)
+  # highest node is anyway an endpoint
+  max_nodes <- length(ls_codes)
+  upper_nodes <- ls_codes[[max_nodes]]  %>% .[!is.na(.)]
+  upper_nodes <- rlang::rep_named(upper_nodes, TRUE)
+  # intermediate nodes can also have terminal nodes
+
+  end <- purrr::map(1:(max_nodes - 1), ~terminator(ls_codes, index = .x)) %>%
+    purrr::flatten_lgl() %>%
+    append(upper_nodes)
+
+  # add to original
+  dplyr::mutate(
+    RGS,
+    terminal = dplyr::recode(.data$referentiecode, !!! end)
+  )
+}
+
+terminator <- function(codes, index) {
+
+  # parent
+  parent <- unique(codes[[index]]) %>% .[!is.na(.)]
+  # child
+  child <- unique(codes[[(index + 1)]]) %>% .[!is.na(.)]
+
+  purrr::map_lgl(parent, ~terminator_(.x, y = child)) %>%
+    rlang::set_names(nm = parent)
+}
+
+terminator_ <- function(x, y) {
+  if (is.na(x)) return(NA)
+  pattern_x <- stringr::str_c(x, "([:alnum:])+")
+  vc_lgl <- stringr::str_detect(y, pattern_x) %>% any
+  !vc_lgl
 }

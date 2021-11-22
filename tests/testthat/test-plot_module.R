@@ -33,7 +33,7 @@ test_that("Sever output based on figure selection", {
     expect_equal(
       session$returned(),
       find_children(
-        parent_seeker(get_standard_business_reporting("Nederland")),
+        get_standard_business_reporting("Nederland"),
         "BFvaOvr"
         )
       )
@@ -53,6 +53,10 @@ alternative_extract <- function(
 }
 
 test_that("Find children", {
+  expect_equal(
+    find_children(parent = NULL),
+    NULL
+  )
   expect_equal(
     find_children(parent = "B"),
     alternative_extract(pattern = "B")

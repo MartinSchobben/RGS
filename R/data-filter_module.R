@@ -31,7 +31,7 @@ filter_ui <- function(id) {
 #' @rdname filter_ui
 #'
 #' @export
-filter_server <- function(id, RGS, external = reactiveVal(NULL)) {
+filter_server <- function(id, RGS, external) {
 
   stopifnot(is.reactive(RGS))
   stopifnot(is.reactive(external))
@@ -39,13 +39,14 @@ filter_server <- function(id, RGS, external = reactiveVal(NULL)) {
   moduleServer(id, function(input, output, session) {
 
     # make check boxes for company type
-    lgl_vars <- reactive(
+    lgl_vars <- reactive({
       dplyr::select(
         RGS(),
         tidyselect::vars_select_helpers$where(is.logical)
         ) %>%
         colnames()
-      )
+      })
+
     output$controls <- renderUI({
       selectizeInput(
         NS(id, "dynamic"),
@@ -58,6 +59,11 @@ filter_server <- function(id, RGS, external = reactiveVal(NULL)) {
       )
     })
 
+    # find children for selected
+    child <- reactive({find_children(RGS(), external())})
+
+    observe(message(glue::glue("{child()}")))
+
     # filter the dataset
     reactive({
       x <- dplyr::filter(
@@ -67,7 +73,7 @@ filter_server <- function(id, RGS, external = reactiveVal(NULL)) {
         !!! rlang::syms(input$dynamic)
         )
       if (!is.null(external())) {
-        x <- dplyr::filter(x, .data$referentiecode %in% external())
+        x <- dplyr::filter(x, .data$referentiecode %in% child())
       }
       x
       })

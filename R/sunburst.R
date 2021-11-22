@@ -9,27 +9,22 @@
 #' @export
 RGS_sunburst <- function(
   RGS = get_standard_business_reporting("Nederland"),
-  interactive = TRUE
+  interactive = TRUE,
+  n_max = 1,
+  seek_endnote = FALSE
   ) {
 
+  if (isTRUE(seek_endnote)) RGS <- endnote_seeker(RGS)
+
+  # make sure endnotes are known
+  assertthat::assert_that(
+    "terminal" %in% colnames(RGS),
+    msg = "Try using seek_endnote = `TRUE`"
+    )
+
   add_weight(RGS) %>%
-   rectify(interactive = interactive) %>%
+   rectify(interactive = interactive, n_max = n_max) %>%
    pie_baker()
-}
-#' @rdname RGS_sunburst
-#'
-#' @export
-parent_seeker <- function(RGS = get_standard_business_reporting("Nederland")) {
-
-  ref_codes <- dplyr::pull(RGS, .data$referentiecode)
-
-  # split of parent
-  ls_par <- parent_seeker_(ref_codes)
-
-  # recast into parent vector and tibble
-  parent <- purrr::map_chr(ls_par, parent_code)
-  tb <- tibble::tibble(parent, child = ref_codes)
-  dplyr::left_join(tb, RGS, by = c("child" = "referentiecode"))
 }
 
 # element wise
@@ -60,11 +55,20 @@ add_weight <- function(RGS, label = "child_") {
   # rename to depth in tree
   vc_RGS <- reformat_data(RGS, labels = label, bind = FALSE)
 
-  # add counts and normalise to total count of maximum depth in the tree
-  weights <- purrr::map(vc_RGS, ~{table(.x)/length(.x)}) %>% purrr::flatten_dbl()
+  # add counts and normalise to total count of maximum depth (terminal nodes only) in the tree
+  weights <- purrr::map(vc_RGS, ~add_weight_(.x, y = RGS$terminal)) %>%
+    purrr::flatten_dbl()
 
   # add weight to df
   dplyr::mutate(RGS, weight = dplyr::recode(.data$referentiecode, !!!weights))
+}
+
+add_weight_ <- function(x, y) {
+
+  fq_table <- table(x)
+  total_end <- sum(y, na.rm = TRUE)
+  fq_table / total_end
+
 }
 
 # create plot element (rectangles) vectorised
