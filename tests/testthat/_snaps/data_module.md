@@ -331,3 +331,45 @@
       #   bank <lgl>, ozw_coop_sticht_fwo <lgl>, afrek_syst <lgl>, nivo5 <lgl>,
       #   uitbr5 <lgl>, terminal <lgl>
 
+---
+
+    Code
+      endnote_seeker(dplyr::filter(RGS, .data$nivo < 3))
+    Output
+      # A tibble: 44 x 26
+         referentiecode referentie_omsla~ sortering referentienummer omschrijving_ver~
+         <chr>          <chr>             <chr>     <chr>            <chr>            
+       1 B              <NA>              <NA>      <NA>             BALANS           
+       2 BIva           <NA>              A         01               Immateriële vast~
+       3 BMva           <NA>              B         02               Materiële vaste ~
+       4 BVas           <NA>              C         02.01            Vastgoedbeleggin~
+       5 BFva           <NA>              D         03               Financiële vaste~
+       6 BVrd           <NA>              E         30               Voorraden        
+       7 BPro           <NA>              F         35               Onderhanden proj~
+       8 BVor           <NA>              G         11               Vorderingen      
+       9 BEff           <NA>              H         04               Effecten (kortlo~
+      10 BLim           <NA>              I         10               Liquide middelen 
+      # ... with 34 more rows, and 21 more variables: omschrijving <chr>, d_c <chr>,
+      #   nivo <dbl>, zzp_belastingdienst_pilot_zol_awa <lgl>, basis <lgl>,
+      #   uitgebr <lgl>, ez_vof_12 <lgl>, zzp <lgl>, wo_co_14 <lgl>, bb <lgl>,
+      #   agro <lgl>, wkr <lgl>, ez_vof_18 <lgl>, bv <lgl>, wo_co_20 <lgl>,
+      #   bank <lgl>, ozw_coop_sticht_fwo <lgl>, afrek_syst <lgl>, nivo5 <lgl>,
+      #   uitbr5 <lgl>, terminal <lgl>
+
+---
+
+    Code
+      endnote_seeker(dplyr::filter(RGS, .data$nivo < 2))
+    Output
+      # A tibble: 2 x 26
+        referentiecode referentie_omslag~ sortering referentienummer omschrijving_ver~
+        <chr>          <chr>              <chr>     <chr>            <chr>            
+      1 B              <NA>               <NA>      <NA>             BALANS           
+      2 W              <NA>               <NA>      <NA>             WINST- EN VERLIE~
+      # ... with 21 more variables: omschrijving <chr>, d_c <chr>, nivo <dbl>,
+      #   zzp_belastingdienst_pilot_zol_awa <lgl>, basis <lgl>, uitgebr <lgl>,
+      #   ez_vof_12 <lgl>, zzp <lgl>, wo_co_14 <lgl>, bb <lgl>, agro <lgl>,
+      #   wkr <lgl>, ez_vof_18 <lgl>, bv <lgl>, wo_co_20 <lgl>, bank <lgl>,
+      #   ozw_coop_sticht_fwo <lgl>, afrek_syst <lgl>, nivo5 <lgl>, uitbr5 <lgl>,
+      #   terminal <lgl>
+

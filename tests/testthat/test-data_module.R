@@ -5,7 +5,7 @@ test_that("Loading the respective dataset and alter ui based on availability", {
 
 test_that("Server output based on available data", {
   # terminal nodes
-  RGS_end <- endnote_seeker(get_standard_business_reporting("Nederland"))
+  RGS_end <- get_standard_business_reporting("Nederland")
 
   testServer(input_server, {
 

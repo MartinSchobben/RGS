@@ -17,7 +17,7 @@ RGS_app <- function() {
         ),
       mainPanel(
         tabsetPanel(
-          id = NS("table", "tabs"),
+          id = "tabs",
           tabPanel(
             "Grafiek",
             plot_ui("plot")
@@ -35,24 +35,24 @@ RGS_app <- function() {
 
     # initiate plot selection (parent)
     parent <- reactiveVal(NULL)
-    # observe(message(glue::glue("{parent()}")))
+    observe(message(glue::glue("{parent()}")))
 
     # original data
     RGS <- input_server("RGS")
 
-    # transforms and find children of parent
-    filter <- filter_server("filter", RGS, parent)
-    var <- select_server("select", filter)
+    # filter, select and find children of parent
+    obs <- filter_server("filter", RGS, parent)
+    var <- select_server("select", obs)
 
-    # plot
-    x <- plot_server("plot", filter)
+      # plot
+    x <- plot_server("plot", obs)
     observe({parent(x())})
 
     # table
     table_server("table", var)
     # download
-    output_server("RGS", var, 2)
-
+    output_server("RGS", var, length(input$tabs))
+    observe(message(glue::glue("{length(input$tabs)}")))
   }
   shinyApp(ui, server)
 }

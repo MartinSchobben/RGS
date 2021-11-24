@@ -76,7 +76,7 @@ alternative_extract <- function(
 test_that("Find children", {
   expect_equal(
     find_children(parent = NULL),
-    NULL
+    dplyr::pull(get_standard_business_reporting("Nederland"), .data$referentiecode)
   )
   expect_equal(
     find_children(parent = "B"),
@@ -99,4 +99,10 @@ test_that("Find children", {
     find_children(parent = "BIvaKouVvpBeg"),
     alternative_extract(pattern = "BIvaKouVvp")
   )
+})
+
+
+test_that("Find parents",{
+  expect_equal(find_parents(NULL), NULL)
+  expect_equal(find_parents(""), NULL)
 })

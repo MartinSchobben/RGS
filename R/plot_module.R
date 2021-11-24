@@ -95,7 +95,7 @@ plot_server <- function(id, RGS) {
     digits = 0
     )
 
-    observe(message(glue::glue("obs: {nrow(RGS())} and {selected()} ")))
+    # observe(message(glue::glue("obs: {nrow(RGS())} and {selected()} ")))
 
     # update output table
     observeEvent(selected(), {
@@ -123,14 +123,14 @@ plot_server <- function(id, RGS) {
       # unselect plot
       # session$sendCustomMessage(type = 'plot_set', message = character(0))
       # update selected ref code
-      if (rows()$terminal[nrow(rows())]) {
-        selected(find_parents(find_parents(selected())))
-      } else {
+      if (nrow(rows()) >= 0 ) {
         selected(find_parents(selected()))
+      } else if (rows()$terminal[nrow(rows())]) {
+        selected(find_parents(find_parents(selected())))
       }
 
       # update table
-      if (nrow(rows()) == 1) {
+      if (nrow(rows()) <= 1) {
         rows(tibble::tibble(NULL))
       } else if (rows()$terminal[nrow(rows())]) {
         rows(rows()[(-nrow(rows()) : -(nrow(rows()) - 1)),]) # 2 rows
@@ -152,7 +152,7 @@ find_children <- function(
   parent
   ) {
 
-  if (is.null(parent)) return(NULL)
+  if (is.null(parent)) return(dplyr::pull(RGS, .data$referentiecode))
   pattern <- glue::glue("^{parent}([:alnum:])+")
 
   # select find the children
@@ -170,8 +170,12 @@ find_children <- function(
 }
 
 find_parents <- function(child) {
-  parent <- parent_code(parent_seeker_(child)[[1]])
-  if (parent == "") NULL else parent
+  if (is.null(child)) {
+    NULL
+  } else {
+    parent <- parent_code(parent_seeker_(child)[[1]])
+    if (parent == "") return(NULL) else return(parent)
+  }
 }
 
 

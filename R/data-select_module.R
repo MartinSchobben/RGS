@@ -44,7 +44,7 @@ select_server <- function(id, RGS, ref_code = c("referentiecode", "nivo"),
     })
 
     # custom selection
-    reactive(dplyr::select(RGS(),  ref_code, input$var))
+    reactive({c(ref_code, input$var)})
 
   })
 }

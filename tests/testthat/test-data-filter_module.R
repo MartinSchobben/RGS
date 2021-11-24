@@ -25,3 +25,11 @@ test_that("Sever output based on RGS input", {
   })
 
 })
+
+
+test_that("generate UI", {
+  RGS <- get_standard_business_reporting("Nederland")
+  vars <- c(Balanszijde = "d_c", Niveau = "nivo")
+  external <- NULL
+  expect_snapshot(purrr::imap(vars, function(var, nm) make_ui(RGS[[var]], NS("l", var), nm)))
+})

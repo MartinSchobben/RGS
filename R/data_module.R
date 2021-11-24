@@ -101,10 +101,12 @@ endnote_seeker <- function(RGS) {
   }
 
   # add to original
-  dplyr::mutate(
-    RGS,
-    terminal = dplyr::recode(.data$referentiecode, !!! upper_nodes)
-  )
+  order_nodes <- upper_nodes[order(factor(names(upper_nodes), levels = RGS$referentiecode))]
+  tibble::add_column(RGS, terminal = order_nodes)
+  # dplyr::mutate(
+  #   RGS,
+  #   terminal = dplyr::recode(.data$referentiecode, !!! upper_nodes)
+  # )
 }
 
 terminator <- function(codes, index) {
