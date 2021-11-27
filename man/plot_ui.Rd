@@ -7,7 +7,7 @@
 \usage{
 plot_ui(id, output = c("plot", "description"), download = TRUE)
 
-plot_server(id, RGS, child)
+plot_server(id, RGS)
 }
 \arguments{
 \item{id}{Namespace id.}

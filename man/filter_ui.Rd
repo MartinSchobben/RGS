@@ -7,7 +7,13 @@
 \usage{
 filter_ui(id)
 
-filter_server(id, RGS, external = reactiveVal(NULL))
+filter_server(
+  id,
+  RGS,
+  external,
+  iexternal = "referentiecode",
+  ivars = c(Balanszijde = "d_c", Niveau = "nivo")
+)
 }
 \arguments{
 \item{id}{Namespace id.}

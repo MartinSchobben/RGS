@@ -58,7 +58,7 @@ reformat_data <- function(RGS, labels = "Niveau ", bind = TRUE) {
     )
 
   # levels
-  lvls <- unique(RGS$nivo)
+  lvls <- unique(RGS$nivo) %>% sort()
 
   # splice splitted reference code according to hierarchical structure
   splits <- purrr::accumulate(as.list(chunks), stringr::str_c)[lvls]

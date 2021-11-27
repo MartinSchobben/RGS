@@ -9,15 +9,13 @@
 #' @return Shiny GUI or server.
 #' @export
 filter_ui <- function(id) {
-  tagList(
-    uiOutput(NS(id, "controls")),
-    uiOutput(NS(id, "default"))
-  )
+  tagList(uiOutput(NS(id, "controls")))
+    #uiOutput(NS(id, "default"))
 }
 #' @rdname filter_ui
 #'
 #' @export
-filter_server <- function(id, RGS, external,
+filter_server <- function(id, RGS, external, iexternal = "referentiecode",
                           ivars = c(Balanszijde = "d_c", Niveau = "nivo")) {
 
   stopifnot(is.reactive(RGS))
@@ -28,83 +26,98 @@ filter_server <- function(id, RGS, external,
     # find children for selected
     child <- reactive({find_children(RGS(), external())})
 
-    # Hadley's book
+    # prevent flickering by two time flushing by child() and input reactive vals
+    observeEvent(child(), {purrr::walk(ivars, ~freezeReactiveValue(input, .x))})
+
+    # conditional isolation of filter values
+    observe(message(glue::glue("obs filter = {nrow(filter())}")))
+
+
     # render controls
     output$controls <- renderUI({
-      # omit level on gui slider based on graphic selected level
-      omit <- find_level(RGS(), external(), ivars)
       purrr::imap(
         ivars,
-        function(var, nm) make_ui(RGS()[[var]], NS(id, var), nm, omit)
-      )
+        function(var, nm) make_ui(filter()[[var]], NS(id, var), nm)
+      ) %>%
+        purrr::imap(~make_panel(.x, .y, id = NS(id)))
     })
 
-    # render controls for default filters (supplied by creator)
-    output$default <- renderUI({
-      make_def_ui(RGS(), NS(id, "dynamic"), "Bedrijfstype")
+    # hide controls
+    output$show1 <- reactive({
+      #TRUE
+      diff(input$nivo) > 1
+      })
+    output$show2 <- reactive({
+      #TRUE
+      length(input$d_c) >= 1
       })
 
-    # variables to be filtered
-    vars <- reactive({c(ivars, input$dynamic)})
+    outputOptions(output, 'show1', suspendWhenHidden = FALSE)
+    outputOptions(output, 'show2', suspendWhenHidden = FALSE)
 
-    trigger <- reactiveVal(NULL)
+    observe(message(glue::glue("range: {diff(input$nivo) < 1} and levels: {length(input$d_c) <= 1}")))
+
+    # render controls for default filters (supplied by creator)
+    # output$default <- renderUI({
+    #   make_def_ui(RGS(), NS(id, "dynamic"), "Bedrijfstype")
+    #   })
+
+    # pseudo input value
+    pseudo <- reactiveValues()
     observe({
-      trigger(isolate(external()))
-    })
+      # external input
+      pseudo[[iexternal]] <- child()
+      # internal input
+      purrr::walk(ivars, ~{pseudo[[.x]] <- input[[.x]]})
+      message(glue::glue("{(x<-reactiveValuesToList(pseudo));str(x)}"))
+      })
 
-    event_trigger <- reactive({
-      any(purrr::map_lgl(vars(), ~isTruthy(input[[.x]]))) #& (trigger() == external())
-    })
+    # temporary check
+    # observe(message(glue::glue("{obs()}")))
+    # extra <- reactive({if (length(obs()) != 0) RGS <- RGS()[obs(), , drop = FALSE] else RGS <- RGS()})
+    # observe(message(glue::glue("Selected: {external()} and number of children: {length(child())} and the nivo range: {stringr::str_c(range(extra()$nivo), collapse = ':')} ")))
 
-    observe(message(glue::glue("or is it zero: {is.null(trigger())} ")))
-
-    obs1 <- eventReactive(event_trigger(), {
-      # filter based on controllers; only react when panel controllers are changed
+    # filter based on controllers and plot selection
+    filter <- eventReactive(purrr::walk(c(iexternal, ivars), ~pseudo[[.x]]), {
       each_var <- purrr::map(
-        vars(),
-        function(var) filter_var(RGS()[[var]], input[[var]])
+        c(iexternal, ivars),
+        function(var) filter_var(RGS()[[var]], pseudo[[var]])
         )
-      purrr::reduce(each_var, `&`)
+      obs <- purrr::reduce(each_var, `&`)
+      RGS()[obs, , drop = FALSE]
     },
-    ignoreInit = TRUE,
-    ignoreNULL = FALSE
+    ignoreInit = T
     )
 
-    obs2  <- eventReactive(external(), {
-    # filter children based on external input; only react when plot selected
-      RGS()$referentiecode %in% child()
-    },
-    ignoreNULL = FALSE
-    )
-
-    # return
-    reactive({endnote_seeker(RGS()[obs1() & obs2(), , drop = FALSE])})
+    # return and include end point variable
+    eventReactive(purrr::walk(ivars, ~input[[.x]]) ,{
+      endnote_seeker(filter())
+    })
   })
 }
 
-# any(purrr::map_lgl(vars(), ~isTruthy(input[[.x]])))
+#
+# trigger <- reactive({any(purrr::map_lgl(vars(), ~isTruthy(pseudo[[.x]])))})
 
-
-make_ui <- function(x, id, name, external = NULL) {
+make_ui <- function(x, id, name) {
 
   if (stringr::str_detect(id, "nivo")) {
     # level range
     value <- range(x, na.rm = TRUE)
-    if (!is.null(external)) {
-      value[1] <- external + 1
-      # no ui rendering when at end of range
-      if (external + 1 >= value[2]) return(NULL)
-    }
+    # no ui rendering when at end of range
+    #if (diff(value) < 1) return()
     sliderInput(
-      id,
-      h5(name),
-      min = value[1],
-      max = value[2],
-      value = value,
-      step = 1
-    )
+        id,
+        h5(name),
+        min = value[1],
+        max = value[2],
+        value = value,
+        step = 1
+      )
   } else if (stringr::str_detect(id, "d_c")) {
     levels <- unique(x[!is.na(x)])
+    # no ui rendering when only one level exists
+    #if (length(levels) <= 1) return()
     D <- c(debit = search_pattern(levels, "d|(debit)|(debet)"))
     C <- c(credit = search_pattern(levels, "c|(credit)"))
     levels <- c(C, D)
@@ -133,10 +146,13 @@ make_def_ui <- function(RGS, id, nm) {
 }
 
 filter_var <- function(x, val) {
+
+  if (is.null(val)) return(rep(TRUE, length(x)))
+
   if (is.numeric(x)) {
     !is.na(x) & x >= val[1] & x <= val[2]
   } else if (is.character(x) | is.factor(x)) {
-    is.na(x) | toupper(x) %in% val
+    is.na(x) | x %in% val
   } else if (is.logical(x)) {
     x
   } else {
@@ -163,6 +179,15 @@ search_pattern <- function(x, pattern) {
   reg <- stringr::regex(pattern, ignore_case = TRUE)
   x[stringr::str_detect(x, reg)] %>%
     # remove duplicate because of case
-    toupper() %>%
+    # toupper() %>%
     unique()
 }
+
+make_panel <- function(x, nm, id){
+  conditionalPanel(
+    condition = paste0("output.show", nm),
+    x,
+    ns = id
+  )
+}
+

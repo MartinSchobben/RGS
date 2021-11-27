@@ -100,13 +100,13 @@ endnote_seeker <- function(RGS) {
       append(upper_nodes)
   }
 
-  # add to original
+  # check whether the codes actually exist in the data
+  upper_nodes <- upper_nodes[names(upper_nodes) %in% RGS$referentiecode]
+
+  # add to original but first order vector to names
   order_nodes <- upper_nodes[order(factor(names(upper_nodes), levels = RGS$referentiecode))]
   tibble::add_column(RGS, terminal = order_nodes)
-  # dplyr::mutate(
-  #   RGS,
-  #   terminal = dplyr::recode(.data$referentiecode, !!! upper_nodes)
-  # )
+
 }
 
 terminator <- function(codes, index) {

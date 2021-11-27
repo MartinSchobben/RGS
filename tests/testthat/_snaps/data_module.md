@@ -373,3 +373,28 @@
       #   ozw_coop_sticht_fwo <lgl>, afrek_syst <lgl>, nivo5 <lgl>, uitbr5 <lgl>,
       #   terminal <lgl>
 
+---
+
+    Code
+      endnote_seeker(dplyr::filter(RGS, .data$d_c == "C" | is.na(.data$d_c)))
+    Output
+      # A tibble: 2,159 x 26
+         referentiecode referentie_omsla~ sortering referentienummer omschrijving_ver~
+         <chr>          <chr>             <chr>     <chr>            <chr>            
+       1 B              <NA>              <NA>      <NA>             BALANS           
+       2 BIvaKouAkpDes  <NA>              A.A.A140  0101015.04       Desinvesteringen 
+       3 BIvaKouAkpDda  <NA>              A.A.A150  0101015.05       Afstotingen      
+       4 BIvaKouCae     <NA>              A.A.B     0101020          Cumulatieve afsc~
+       5 BIvaKouCaeBeg  <NA>              A.A.B010  0101020.01       Beginbalans (ove~
+       6 BIvaKouCaeAfs  <NA>              A.A.B020  0101020.02       Afschrijvingen   
+       7 BIvaKouCaeWvr  <NA>              A.A.B040  0101020.04       Bijzondere waard~
+       8 BIvaKouCuhAfh  <NA>              A.A.C030  0101030.03       Afschrijving her~
+       9 BIvaKouCuhDeh  <NA>              A.A.C040  0101030.04       Desinvestering h~
+      10 BIvaKooVvpDes  <NA>              A.B.A040  0102010.04       Desinvesteringen 
+      # ... with 2,149 more rows, and 21 more variables: omschrijving <chr>,
+      #   d_c <chr>, nivo <dbl>, zzp_belastingdienst_pilot_zol_awa <lgl>,
+      #   basis <lgl>, uitgebr <lgl>, ez_vof_12 <lgl>, zzp <lgl>, wo_co_14 <lgl>,
+      #   bb <lgl>, agro <lgl>, wkr <lgl>, ez_vof_18 <lgl>, bv <lgl>, wo_co_20 <lgl>,
+      #   bank <lgl>, ozw_coop_sticht_fwo <lgl>, afrek_syst <lgl>, nivo5 <lgl>,
+      #   uitbr5 <lgl>, terminal <lgl>
+

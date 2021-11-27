@@ -35,4 +35,5 @@ test_that("find terminal nodes" , {
   # limited levels
   expect_snapshot(endnote_seeker(dplyr::filter(RGS, .data$nivo < 3)))
   expect_snapshot(endnote_seeker(dplyr::filter(RGS, .data$nivo < 2)))
+  expect_snapshot(endnote_seeker(dplyr::filter(RGS, .data$d_c == "C" | is.na(.data$d_c))))
 })

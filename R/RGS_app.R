@@ -35,7 +35,6 @@ RGS_app <- function() {
 
     # initiate plot selection (parent)
     parent <- reactiveVal(NULL)
-    observe(message(glue::glue("{parent()}")))
 
     # original data
     RGS <- input_server("RGS")
@@ -52,7 +51,7 @@ RGS_app <- function() {
     table_server("table", var)
     # download
     output_server("RGS", var, length(input$tabs))
-    observe(message(glue::glue("{length(input$tabs)}")))
+
   }
   shinyApp(ui, server)
 }
