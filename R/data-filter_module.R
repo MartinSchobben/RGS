@@ -8,15 +8,37 @@
 #'
 #' @return Shiny GUI or server.
 #' @export
-filter_ui <- function(id) {
-  tagList(uiOutput(NS(id, "controls")))
-    #uiOutput(NS(id, "default"))
+filter_ui <- function(id, level = "Niveau", direction = "Balanszijde") {
+
+  ls_input <- tagList(
+    sliderInput(
+      NS(id, "level"),
+      h5(level),
+      min = 1,
+      max = 5,
+      value = c(1, 5)
+      # step = 1
+      ),
+    checkboxGroupInput(
+      NS(id, "direction"),
+      h5(direction),
+      choices = c(debit = "C", credit = "D"),
+      selected = c("C", "D"),
+      inline = TRUE
+    )
+  )
+
+  # conditional panels
+  # ls_input
+  purrr::map2(ls_input, c("level", "direction"), ~make_panel(.x, .y, id = NS(id)))
+
 }
 #' @rdname filter_ui
 #'
 #' @export
-filter_server <- function(id, RGS, external, iexternal = "referentiecode",
-                          ivars = c(Balanszijde = "d_c", Niveau = "nivo")) {
+filter_server <- function(id, RGS, external,
+                          iexternal = c(code = "referentiecode"),
+                          ivars = c(direction = "d_c", level = "nivo")) {
 
   stopifnot(is.reactive(RGS))
   stopifnot(is.reactive(external))
@@ -26,108 +48,107 @@ filter_server <- function(id, RGS, external, iexternal = "referentiecode",
     # find children for selected
     child <- reactive({find_children(RGS(), external())})
 
-    # prevent flickering by two time flushing by child() and input reactive vals
-    observeEvent(child(), {purrr::walk(ivars, ~freezeReactiveValue(input, .x))})
-
-    # conditional isolation of filter values
-    observe(message(glue::glue("obs filter = {nrow(filter())}")))
-
-
-    # render controls
-    output$controls <- renderUI({
-      purrr::imap(
-        ivars,
-        function(var, nm) make_ui(filter()[[var]], NS(id, var), nm)
-      ) %>%
-        purrr::imap(~make_panel(.x, .y, id = NS(id)))
+    # freeze
+    observeEvent(external(), {
+      purrr::walk(ivars, ~freezeReactiveValue(input, .))
     })
 
-    # hide controls
-    output$show1 <- reactive({
-      #TRUE
-      diff(input$nivo) > 1
-      })
-    output$show2 <- reactive({
-      #TRUE
-      length(input$d_c) >= 1
-      })
+    observe(message(glue::glue("{child() %in% filter()[[iexternal]] %>% unique}")))
+    # update controls to make them conditional to the available variable ranges
+    observeEvent(filter() ,{
+      purrr::iwalk(
+        ivars,
+        ~update_ui(filter()[[.x]], input[[.y]], id = .y, session = session)
+      )
+    })
 
-    outputOptions(output, 'show1', suspendWhenHidden = FALSE)
-    outputOptions(output, 'show2', suspendWhenHidden = FALSE)
-
-    observe(message(glue::glue("range: {diff(input$nivo) < 1} and levels: {length(input$d_c) <= 1}")))
-
-    # render controls for default filters (supplied by creator)
-    # output$default <- renderUI({
-    #   make_def_ui(RGS(), NS(id, "dynamic"), "Bedrijfstype")
-    #   })
+    # remove controls from view when choices are absent
+    observe({
+      purrr::iwalk(
+        ivars,
+        ~{
+        output[[.y]] <- remove_ui(filter()[[.x]], id = .y)
+        outputOptions(output, .y, suspendWhenHidden = FALSE)
+        }
+      )
+    })
 
     # pseudo input value
     pseudo <- reactiveValues()
     observe({
       # external input
-      pseudo[[iexternal]] <- child()
+      pseudo[[names(iexternal)]] <- child()
       # internal input
-      purrr::walk(ivars, ~{pseudo[[.x]] <- input[[.x]]})
+      purrr::map(names(ivars), ~{pseudo[[.x]] <- input[[.x]]})
       message(glue::glue("{(x<-reactiveValuesToList(pseudo));str(x)}"))
-      })
-
-    # temporary check
-    # observe(message(glue::glue("{obs()}")))
-    # extra <- reactive({if (length(obs()) != 0) RGS <- RGS()[obs(), , drop = FALSE] else RGS <- RGS()})
-    # observe(message(glue::glue("Selected: {external()} and number of children: {length(child())} and the nivo range: {stringr::str_c(range(extra()$nivo), collapse = ':')} ")))
+    })
 
     # filter based on controllers and plot selection
-    filter <- eventReactive(purrr::walk(c(iexternal, ivars), ~pseudo[[.x]]), {
-      each_var <- purrr::map(
+    filter <- reactive({
+      #req(purrr::walk(names(c(iexternal, ivars)), ~pseudo[[.x]]))
+      each_var <- purrr::imap(
         c(iexternal, ivars),
-        function(var) filter_var(RGS()[[var]], pseudo[[var]])
+        ~filter_var(RGS()[[.x]], pseudo[[.y]])
         )
       obs <- purrr::reduce(each_var, `&`)
       RGS()[obs, , drop = FALSE]
-    },
-    ignoreInit = T
-    )
+    })
 
     # return and include end point variable
-    eventReactive(purrr::walk(ivars, ~input[[.x]]) ,{
+    eventReactive(purrr::walk(names(ivars), ~input[[.x]]), {
       endnote_seeker(filter())
-    })
+    },
+    ignoreInit = TRUE
+    )
   })
 }
 
-#
-# trigger <- reactive({any(purrr::map_lgl(vars(), ~isTruthy(pseudo[[.x]])))})
 
-make_ui <- function(x, id, name) {
+update_ui <- function(x, original, id, session) {
 
-  if (stringr::str_detect(id, "nivo")) {
-    # level range
+  if (id == "level") {
+    # level range in data
     value <- range(x, na.rm = TRUE)
-    # no ui rendering when at end of range
-    #if (diff(value) < 1) return()
-    sliderInput(
-        id,
-        h5(name),
-        min = value[1],
-        max = value[2],
-        value = value,
-        step = 1
-      )
-  } else if (stringr::str_detect(id, "d_c")) {
+    # compare original with new range
+    if (!isTRUE(all.equal(value, original))) {
+        updateSliderInput(
+          session = session,
+          inputId = id,
+          min = value[1],
+          max = value[2],
+          value = value
+        )
+    }
+  } else if (id == "direction") {
     levels <- unique(x[!is.na(x)])
     # no ui rendering when only one level exists
-    #if (length(levels) <= 1) return()
     D <- c(debit = search_pattern(levels, "d|(debit)|(debet)"))
     C <- c(credit = search_pattern(levels, "c|(credit)"))
     levels <- c(C, D)
-    checkboxGroupInput(
-      id,
-      h5(name),
-      choices = levels,
-      selected = levels,
-      inline = TRUE
-    )
+    # compare original with new range
+    if (!isTRUE(all.equal(levels, original))) {
+        updateCheckboxGroupInput(
+          session = session,
+          inputId = id,
+          choices = levels,
+          selected = levels
+        )
+    }
+  }
+}
+
+remove_ui <- function(x, id) {
+  if (id == "level") {
+    # level range in data
+    value <- range(x, na.rm = TRUE)
+    reactive({if (diff(value) > 1) TRUE else FALSE})
+  } else if (id == "direction") {
+    levels <- unique(x[!is.na(x)])
+    # no ui rendering when only one level exists
+    D <- c(debit = search_pattern(levels, "d|(debit)|(debet)"))
+    C <- c(credit = search_pattern(levels, "c|(credit)"))
+    levels <- c(C, D)
+    reactive({if (length(levels) > 0) TRUE else FALSE})
   }
 }
 
@@ -185,9 +206,33 @@ search_pattern <- function(x, pattern) {
 
 make_panel <- function(x, nm, id){
   conditionalPanel(
-    condition = paste0("output.show", nm),
+    condition = paste0("output.", nm),
     x,
     ns = id
   )
 }
 
+# output$controls <- renderUI({
+#   purrr::imap(
+#     ivars,
+#     function(var, nm) make_ui(filter()[[var]], NS(id, var), nm)
+#   )
+# })
+
+# hide controls
+# output$show1 <- reactive({
+#   #TRUE
+#   diff(input$nivo) > 1
+# })
+# output$show2 <- reactive({
+#   #TRUE
+#   length(input$d_c) >= 1
+# })
+#
+# outputOptions(output, 'show1', suspendWhenHidden = FALSE)
+# outputOptions(output, 'show2', suspendWhenHidden = FALSE)
+
+# render controls for default filters (supplied by creator)
+# output$default <- renderUI({
+#   make_def_ui(RGS(), NS(id, "dynamic"), "Bedrijfstype")
+#   })
