@@ -29,7 +29,6 @@ filter_ui <- function(id, level = "Niveau", direction = "Balanszijde") {
   )
 
   # conditional panels
-  # ls_input
   purrr::map2(ls_input, c("level", "direction"), ~make_panel(.x, .y, id = NS(id)))
 
 }
@@ -48,61 +47,53 @@ filter_server <- function(id, RGS, external,
     # find children for selected
     child <- reactive({find_children(RGS(), external())})
 
-    # freeze
-    observeEvent(external(), {
-      purrr::walk(ivars, ~freezeReactiveValue(input, .))
-    })
+    # observe(message(glue::glue("{str(rlang::list2(!!!reactiveValuesToList(input), code = child()))}")))
 
-    observe(message(glue::glue("{child() %in% filter()[[iexternal]] %>% unique}")))
     # update controls to make them conditional to the available variable ranges
-    observeEvent(filter() ,{
+    observeEvent(codes(), {
+      sub <- RGS()[codes(), , drop = FALSE]
       purrr::iwalk(
         ivars,
-        ~update_ui(filter()[[.x]], input[[.y]], id = .y, session = session)
+        ~update_ui(sub[[.x]], input[[.y]], id = .y, session = session)
+      )
+    })
+    observeEvent(filter(), {
+      sub <- RGS()[filter(), , drop = FALSE]
+      purrr::iwalk(
+        ivars,
+        ~update_ui(sub[[.x]], input[[.y]], id = .y, session = session)
       )
     })
 
     # remove controls from view when choices are absent
     observe({
+      sub <- RGS()[codes() & filter(), , drop = FALSE]
       purrr::iwalk(
         ivars,
         ~{
-        output[[.y]] <- remove_ui(filter()[[.x]], id = .y)
+        output[[.y]] <- remove_ui(sub[[.x]], id = .y)
         outputOptions(output, .y, suspendWhenHidden = FALSE)
         }
       )
     })
 
-    # pseudo input value
-    pseudo <- reactiveValues()
-    observe({
-      # external input
-      pseudo[[names(iexternal)]] <- child()
-      # internal input
-      purrr::map(names(ivars), ~{pseudo[[.x]] <- input[[.x]]})
-      message(glue::glue("{(x<-reactiveValuesToList(pseudo));str(x)}"))
-    })
+    # filter based on plot selection
+    codes <- reactive({filter_var(RGS()[[iexternal]], child())})
 
-    # filter based on controllers and plot selection
+    # filter based on controllers
     filter <- reactive({
-      #req(purrr::walk(names(c(iexternal, ivars)), ~pseudo[[.x]]))
-      each_var <- purrr::imap(
-        c(iexternal, ivars),
-        ~filter_var(RGS()[[.x]], pseudo[[.y]])
-        )
-      obs <- purrr::reduce(each_var, `&`)
-      RGS()[obs, , drop = FALSE]
+      each_var <- purrr::imap(ivars, ~filter_var(RGS()[[.x]], input[[.y]]))
+      purrr::reduce(each_var, `&`)
     })
 
     # return and include end point variable
     eventReactive(purrr::walk(names(ivars), ~input[[.x]]), {
-      endnote_seeker(filter())
+      endnote_seeker(RGS()[codes() & filter(), , drop = FALSE])
     },
     ignoreInit = TRUE
     )
   })
 }
-
 
 update_ui <- function(x, original, id, session) {
 
