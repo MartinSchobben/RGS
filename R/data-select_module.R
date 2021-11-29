@@ -24,7 +24,7 @@ select_ui <- function(id) {
 #' @rdname select_ui
 #'
 #' @export
-select_server <- function(id, RGS, ref_code = c("referentiecode", "nivo"),
+select_server <- function(id, RGS, ref_code = c("referentiecode", "nivo", "terminal"),
                           default = c("omschrijving", "referentienummer")) {
 
   stopifnot(is.reactive(RGS))
@@ -44,7 +44,7 @@ select_server <- function(id, RGS, ref_code = c("referentiecode", "nivo"),
     })
 
     # custom selection
-    reactive({c(ref_code, input$var)})
+    reactive({dplyr::select(RGS(), ref_code, input$var)})
 
   })
 }

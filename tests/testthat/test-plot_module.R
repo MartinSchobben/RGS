@@ -76,7 +76,7 @@ alternative_extract <- function(
 test_that("Find children", {
   expect_equal(
     find_children(parent = NULL),
-    NULL
+    get_standard_business_reporting("Nederland")$referentiecode
   )
   expect_equal(
     find_children(parent = "B"),

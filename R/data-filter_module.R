@@ -14,23 +14,22 @@ filter_ui <- function(id, level = "Niveau", direction = "Balanszijde") {
     sliderInput(
       NS(id, "level"),
       h5(level),
-      min = 1,
-      max = 5,
-      value = c(1, 5)
-      # step = 1
+      min = 0,
+      max = 0,
+      value = c(0, 0),
+      step = 1
       ),
     checkboxGroupInput(
       NS(id, "direction"),
       h5(direction),
-      choices = c(debit = "C", credit = "D"),
-      selected = c("C", "D"),
+      choices = "",
+      selected = "",
       inline = TRUE
     )
   )
 
   # conditional panels
   purrr::map2(ls_input, c("level", "direction"), ~make_panel(.x, .y, id = NS(id)))
-
 }
 #' @rdname filter_ui
 #'
@@ -47,18 +46,16 @@ filter_server <- function(id, RGS, external,
     # find children for selected
     child <- reactive({find_children(RGS(), external())})
 
-    # observe(message(glue::glue("{str(rlang::list2(!!!reactiveValuesToList(input), code = child()))}")))
-
     # update controls to make them conditional to the available variable ranges
     observeEvent(codes(), {
-      sub <- RGS()[codes(), , drop = FALSE]
+      sub <- RGS()[req(codes()), , drop = FALSE]
       purrr::iwalk(
         ivars,
         ~update_ui(sub[[.x]], input[[.y]], id = .y, session = session)
       )
     })
     observeEvent(filter(), {
-      sub <- RGS()[filter(), , drop = FALSE]
+      sub <- RGS()[req(filter()), , drop = FALSE]
       purrr::iwalk(
         ivars,
         ~update_ui(sub[[.x]], input[[.y]], id = .y, session = session)
@@ -67,7 +64,7 @@ filter_server <- function(id, RGS, external,
 
     # remove controls from view when choices are absent
     observe({
-      sub <- RGS()[codes() & filter(), , drop = FALSE]
+      sub <- RGS()[req(codes()) & req(filter()), , drop = FALSE]
       purrr::iwalk(
         ivars,
         ~{
@@ -132,7 +129,7 @@ remove_ui <- function(x, id) {
   if (id == "level") {
     # level range in data
     value <- range(x, na.rm = TRUE)
-    reactive({if (diff(value) > 1) TRUE else FALSE})
+    reactive({if (diff(value) > 0) TRUE else FALSE})
   } else if (id == "direction") {
     levels <- unique(x[!is.na(x)])
     # no ui rendering when only one level exists

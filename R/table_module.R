@@ -33,6 +33,9 @@ table_server <- function(id, RGS, labels = "Niveau ") {
     # reformat to include hierarchy
     nested <- reactive(reformat_data(RGS()))
 
+    observe(message(glue::glue("{str(nested())}")))
+    observe(message(glue::glue("{str(display_data(nested(), labels))}")))
+
     # table output with nested data structure
     output$table <- reactable::renderReactable({
       reactable::reactable(
@@ -59,7 +62,6 @@ reformat_data <- function(RGS, labels = "Niveau ", bind = TRUE) {
 
   # levels
   lvls <- unique(RGS$nivo) %>% sort()
-
   # splice splitted reference code according to hierarchical structure
   splits <- purrr::accumulate(as.list(chunks), stringr::str_c)[lvls]
 
@@ -75,74 +77,73 @@ reformat_data <- function(RGS, labels = "Niveau ", bind = TRUE) {
 }
 
 # get the data ready for table output
-display_data <- function(original, labels) {
+display_data <- function(original, labels, drill_down = FALSE) {
 
-  if (is.character(labels)) {
-    # minimum level of ref code
-    level <- min(dplyr::pull(original, .data$nivo))
-    # label columns to be removed
-    labs <- find_label_colums(original, labels)
-    labs <- labs[!labs %in% paste0(labels, level)]
-  } else {
-    level <- labels
-  }
   # filter NA based on the first column of augmented data
-  original <- original [!is.na(original[[level]]),]
-  # regex
-  pattern <- stringr::str_c("^", unique(original[[level]]), "$", collapse = "|")
+  original <- original [!is.na(original[[1]]), ]
 
-  # filter ref codes
+  # level
+  level <- dplyr::pull(original, .data$nivo) %>%
+    min(na.rm = TRUE)
+
+  # labels of columns to be removed
+  labs <- find_label_colums(original, labels)
+  labs <- labs[!labs %in% paste0(labels, level)]
+
+  # filter reference codes
   xc <- dplyr::filter(
     original,
-    stringr::str_detect(.data$referentiecode, pattern)
+    .data$referentiecode %in% unique(original[[paste0(labels, level)]])
     ) %>%
     dplyr::select(
-      # none important columns
-      -c(.data$referentiecode, .data$nivo)
+      # omit unimportant columns for viewing
+      -c(.data$referentiecode, .data$nivo, .data$terminal)
       ) %>%
     # remove NA columns
     dplyr::select(tidyselect::vars_select_helpers$where(~{!all(is.na(.x))}))
 
   # less than minimal level columns
-  if (is.character(labels)) {
-    dplyr::select(xc, -tidyselect::any_of(labs))
+  if (isTRUE(drill_down)) {
+    xc
   } else {
-    return(xc)
+    dplyr::select(xc, -tidyselect::any_of(labs))
   }
 }
 
 # recursive drill down of table for nested tables
-drill_down <- function(original, display, labels) {
+drill_down <- function(original, display, labels, test_modus = FALSE) {
   function(index) {
 
     # index
     display_index <- display[[1]][index]
 
     # filter with index upon parent column
-    augmented <- original[original[[1]] == display_index,]
+    augmented <- original[original[[1]] == display_index & !is.na(original[[1]]), , drop = FALSE]
+
+    # terminal point? then short cut
+    if(all(augmented$terminal)) return(NULL)
 
     # remove first column of hierarchical structure
     labs <- find_label_colums(augmented, labels)
-    if (length(labs) <= 1) return(NULL)
+    # if (length(labs) <= 1) return(NULL)
     augmented <- dplyr::select(augmented, -tidyselect::any_of(labs[1]))
 
     # filter NA based on the first column of augmented data
-    augmented <- augmented[!is.na(augmented [[1]]),]
+    augmented <- augmented[!is.na(augmented[[1]]), , drop = FALSE]
 
     # final display
-    display <- display_data(augmented, 1)
+    display <- display_data(augmented, labels = labels, drill_down = TRUE)
 
-    if (nrow(display) > 0) {
-      # new nested reactable
-      reactable::reactable(
-        display,
-        columns = remove_column_names(display),
-        details = drill_down(augmented, display, labels)
-      )
+    if (isTRUE(test_modus)) {
+    display
     } else {
-      NULL
+    # new nested reactable
+    reactable::reactable(
+      display,
+      columns = remove_column_names(display),
+      details = drill_down(augmented, display, labels)
+    )
     }
-
   }
 }
 

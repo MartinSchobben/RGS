@@ -32,6 +32,11 @@ plot_ui <- function(id, output = c("plot", "description"), download = TRUE) {
         tags$br(),
         wellPanel(
           h5("Referentiecode"),
+          conditionalPanel(
+            condition = "output.reference==null",
+            "Klik op de grafiek om een code samen te stellen.",
+            ns = NS(id)
+          ),
           tableOutput(NS(id, "reference")),
           tags$br(),
           tags$br(),
@@ -48,7 +53,6 @@ plot_server <- function(id, RGS) {
 
   # check for reactive
   stopifnot(is.reactive(RGS))
-  # stopifnot(is.reactive(parent))
 
   moduleServer(id, function(input, output, session) {
 
@@ -101,7 +105,6 @@ plot_server <- function(id, RGS) {
     observeEvent(selected(), {
       # stop adding rows at terminal node but replace them
       obs <- dplyr::filter(RGS(), .data$referentiecode %in% selected())
-
       if (!selected() %in% find_children(RGS(), selected())) {
         rows(dplyr::bind_rows(rows(), obs))
       } else {
@@ -128,12 +131,9 @@ plot_server <- function(id, RGS) {
       } else if (rows()$terminal[nrow(rows())]) {
         selected(find_parents(find_parents(selected())))
       }
-
       # update table
       if (nrow(rows()) <= 1) {
         rows(tibble::tibble(NULL))
-      } else if (rows()$terminal[nrow(rows())]) {
-        rows(rows()[(-nrow(rows()) : -(nrow(rows()) - 1)),]) # 2 rows
       } else {
         rows(rows()[-nrow(rows()),]) # 1 row
       }
