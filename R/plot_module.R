@@ -6,7 +6,6 @@
 #' @param output Plot output.
 #' @param download Add download button.
 #' @param RGS Reactive value for the reference system.
-#' @param child Reactive value for children of parent RGS.
 #'
 #' @return Shiny GUI or server.
 #' @export

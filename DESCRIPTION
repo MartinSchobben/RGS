@@ -15,7 +15,7 @@ Imports:
     dplyr (>= 1.0.7),
     forcats (>= 0.5.1),
     fs (>= 1.5.0),
-    ggiraph,
+    ggiraph (>= 0.7.10),
     ggplot2 (>= 3.3.5),
     ggrepel (>= 0.9.1),
     glue (>= 1.4.2),
@@ -25,19 +25,15 @@ Imports:
     magrittr (>= 2.0.1),
     purrr (>= 0.3.4),
     reactable (>= 0.2.3),
-    reactlog,
     readr (>= 2.0.2),
     readxl (>= 1.3.1),
     rlang (>= 0.4.11),
-    rsconnect (>= 0.8.24),
     shiny (>= 1.7.1),
     shinycssloaders (>= 1.0.0),
-    shinyjs,
-    shinyWidgets,
     stringr (>= 1.4.0),
     thematic (>= 0.1.2.1),
-    tibble,
-    tidyr,
+    tibble (>= 3.1.5),
+    tidyr (>= 1.1.4),
     tidyselect (>= 1.1.1)
 Depends: 
     R (>= 2.10)
@@ -48,5 +44,7 @@ Suggests:
     roxygen2,
     shinytest,
     globals,
-    covr
+    covr,
+    shinyjs (>= 2.0.0),
+    shinyWidgets (>= 0.6.2)
 Config/testthat/edition: 3

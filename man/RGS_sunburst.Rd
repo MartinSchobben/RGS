@@ -15,6 +15,12 @@ RGS_sunburst(
 \item{RGS}{\href{https://www.referentiegrootboekschema.nl/}{Referentie GrootboekSchema}}
 
 \item{interactive}{Make plot interactive.}
+
+\item{n_max}{Numeric value specifying maximum number rings plotted in
+sunburst plot.}
+
+\item{seek_endnote}{Logical indicating whether terminal endnotes of the
+hierarchical data should be calculated.}
 }
 \value{
 \code{ggplot2::\link[ggplot2:ggplot]{ggplot}()}

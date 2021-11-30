@@ -104,7 +104,9 @@ endnote_seeker <- function(RGS) {
   upper_nodes <- upper_nodes[names(upper_nodes) %in% RGS$referentiecode]
 
   # add to original but first order vector to names
-  order_nodes <- upper_nodes[order(factor(names(upper_nodes), levels = RGS$referentiecode))]
+  order_nodes <- upper_nodes[order(
+    factor(names(upper_nodes), levels = RGS$referentiecode)
+    )]
   tibble::add_column(RGS, terminal = order_nodes)
 
 }

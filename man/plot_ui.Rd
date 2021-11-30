@@ -17,8 +17,6 @@ plot_server(id, RGS)
 \item{download}{Add download button.}
 
 \item{RGS}{Reactive value for the reference system.}
-
-\item{child}{Reactive value for children of parent RGS.}
 }
 \value{
 Shiny GUI or server.

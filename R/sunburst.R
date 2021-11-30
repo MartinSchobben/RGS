@@ -4,6 +4,10 @@
 #'
 #' @param RGS \href{https://www.referentiegrootboekschema.nl/}{Referentie GrootboekSchema}
 #' @param interactive Make plot interactive.
+#' @param n_max Numeric value specifying maximum number rings plotted in
+#' sunburst plot.
+#' @param seek_endnote Logical indicating whether terminal endnotes of the
+#' hierarchical data should be calculated.
 #'
 #' @return \code{ggplot2::\link[ggplot2:ggplot]{ggplot}()}
 #' @export

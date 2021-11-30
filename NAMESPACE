@@ -22,7 +22,6 @@ export(select_server)
 export(select_ui)
 export(table_server)
 export(table_ui)
-import(rsconnect)
 import(shiny, except = serverInfo)
 
 importFrom(magrittr,"%>%")

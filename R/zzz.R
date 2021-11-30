@@ -4,3 +4,5 @@
   # shiny::addResourcePath("sbs", system.file("www", package = "shinyBS"))
 }
 
+# global vars
+utils::globalVariables(".")

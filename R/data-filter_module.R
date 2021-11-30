@@ -3,8 +3,15 @@
 #' GUI and server modules for filtering RGS datasets.
 #'
 #' @param id Namespace id.
+#' @param level Name on controller ui for level in hierarchical data.
+#' @param direction Name on controller ui for ledger side (debit or credit).
+#' @param dynamic Name on controller ui for user supplied filters.
 #' @param RGS Reactive value for the reference system.
 #' @param external Reactive value for children of parent RGS.
+#' @param iexternal Name of variable for reference codes.
+#' @param ivars Named vector of length two for the variables associated with
+#' `level` (see parameter ui above) and `direction` (see parameter ui above) to
+#' filter data in the server module.
 #'
 #' @return Shiny GUI or server.
 #' @export
