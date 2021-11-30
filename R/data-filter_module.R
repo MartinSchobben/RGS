@@ -8,7 +8,8 @@
 #'
 #' @return Shiny GUI or server.
 #' @export
-filter_ui <- function(id, level = "Niveau", direction = "Balanszijde") {
+filter_ui <- function(id, level = "Niveau", direction = "Balanszijde",
+                      dynamic = "Rechtsvorm/sector") {
 
   ls_input <- tagList(
     sliderInput(
@@ -29,7 +30,26 @@ filter_ui <- function(id, level = "Niveau", direction = "Balanszijde") {
   )
 
   # conditional panels
-  purrr::map2(ls_input, c("level", "direction"), ~make_panel(.x, .y, id = NS(id)))
+  ls_input <- purrr::map2(
+    ls_input,
+    c("level", "direction"),
+    ~make_panel(.x, .y, id = NS(id))
+  )
+
+  # default filters
+  tagAppendChild(
+    ls_input,
+    selectizeInput(
+      NS(id, "dynamic"),
+      h5(dynamic),
+      choices = "",
+      options = list(
+        placeholder = "Selecteer een rechtsvorm/sector",
+        onInitialize = I('function() { this.setValue(""); }')
+      )
+    )
+  )
+
 }
 #' @rdname filter_ui
 #'
@@ -60,6 +80,8 @@ filter_server <- function(id, RGS, external,
         ivars,
         ~update_ui(sub[[.x]], input[[.y]], id = .y, session = session)
       )
+      # default filter
+      dynamic_ui(sub, input$dynamic, "dynamic", session = session)
     })
 
     # remove controls from view when choices are absent
@@ -78,8 +100,13 @@ filter_server <- function(id, RGS, external,
     codes <- reactive({filter_var(RGS()[[iexternal]], child())})
 
     # filter based on controllers
-    filter <- reactive({
-      each_var <- purrr::imap(ivars, ~filter_var(RGS()[[.x]], input[[.y]]))
+    filter <- eventReactive({
+      purrr::walk(c(names(ivars), "dynamic"), ~input[[.x]])
+    }, {
+      each_var <- purrr::imap(
+        c(ivars, input$dynamic),
+        ~filter_var(RGS()[[.x]], input[[.y]])
+      )
       purrr::reduce(each_var, `&`)
     })
 
@@ -141,29 +168,25 @@ remove_ui <- function(x, id) {
 }
 
 # default filters
-make_def_ui <- function(RGS, id, nm) {
-  selectizeInput(
-    id,
-    h5(nm),
+dynamic_ui <- function(RGS, value, id, session) {
+  updateSelectizeInput(
+    session = session,
+    inputId = id,
     choices = find_vars(RGS, is.logical),
-    options = list(
-      placeholder = "Selecteer een bedrijfstype",
-      onInitialize = I('function() { this.setValue(""); }')
-    )
+    selected = isolate(value)
   )
-
 }
 
-filter_var <- function(x, val) {
+filter_var <- function(x, val = NULL) {
 
-  if (is.null(val)) return(rep(TRUE, length(x)))
+  # if (is.null(val)) return(rep(TRUE, length(x)))
 
   if (is.numeric(x)) {
     !is.na(x) & x >= val[1] & x <= val[2]
   } else if (is.character(x) | is.factor(x)) {
     is.na(x) | x %in% val
   } else if (is.logical(x)) {
-    x
+    !is.na(x) & x
   } else {
     # No control, so don't filter
     TRUE

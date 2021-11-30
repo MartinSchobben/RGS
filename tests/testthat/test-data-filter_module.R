@@ -1,4 +1,4 @@
-test_that("Sever output based on RGS input", {
+test_that("filter server module output based on RGS input", {
   x <- reactiveVal()
   y <- reactiveVal()
   testServer(filter_server, args = list(RGS = x, external = y), {
@@ -11,7 +11,7 @@ test_that("Sever output based on RGS input", {
     # unfiltered
     expect_equal(RGS(), get_standard_business_reporting("Nederland"))
     # credit/debit filtered
-    print(session$returned())
+    # print(session$returned()$referentiecode)
     # expect_equal(
     #   session$returned(),
     #   dplyr::filter(
@@ -28,13 +28,3 @@ test_that("Sever output based on RGS input", {
 })
 
 
-test_that("generate UI", {
-  RGS <- get_standard_business_reporting("Nederland")
-  vars <- c(direction = "d_c", level = "nivo")
-  expect_snapshot(
-    purrr::imap(
-      vars,
-      ~update_ui(sub[[.x]], input[[.y]], id = .y, session = session)
-      )
-    )
-})

@@ -33,9 +33,6 @@ table_server <- function(id, RGS, labels = "Niveau ") {
     # reformat to include hierarchy
     nested <- reactive(reformat_data(RGS()))
 
-    observe(message(glue::glue("{str(nested())}")))
-    observe(message(glue::glue("{str(display_data(nested(), labels))}")))
-
     # table output with nested data structure
     output$table <- reactable::renderReactable({
       reactable::reactable(
