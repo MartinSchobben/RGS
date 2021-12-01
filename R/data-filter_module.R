@@ -6,6 +6,7 @@
 #' @param level Name on controller ui for level in hierarchical data.
 #' @param direction Name on controller ui for ledger side (debit or credit).
 #' @param dynamic Name on controller ui for user supplied filters.
+#' @param examples Name on controller ui for example ledger cases.
 #' @param RGS Reactive value for the reference system.
 #' @param external Reactive value for children of parent RGS.
 #' @param iexternal Name of variable for reference codes.
@@ -121,7 +122,7 @@ filter_server <- function(id, RGS, external,
       purrr::reduce(each_var, `&`)
     })
 
-    # filter based on example ledgers or plot selection
+    # filter based on example ledgers and plot selection
     codes <- eventReactive({external(); input$examples}, {
       if (input$examples == "") {
         # find children for selected

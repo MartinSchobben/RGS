@@ -11,7 +11,8 @@ select_server(
   id,
   RGS,
   ref_code = c("referentiecode", "nivo", "terminal"),
-  default = c("omschrijving", "referentienummer")
+  default = c("omschrijving", "referentienummer"),
+  additional = c("sortering", "omschrijving_verkort", "referentie_omslagcode")
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ select_server(
 \item{ref_code}{Pre-selected variables (character string or vector).}
 
 \item{default}{Default variables (character string or vector).}
+
+\item{additional}{Additional variables (character string or vector).}
 }
 \value{
 Shiny GUI or server.

@@ -9,7 +9,8 @@ filter_ui(
   id,
   level = "Niveau",
   direction = "Balanszijde",
-  dynamic = "Rechtsvorm/sector"
+  dynamic = "Rechtsvorm/sector",
+  examples = "Voorbeelden"
 )
 
 filter_server(
@@ -28,6 +29,8 @@ filter_server(
 \item{direction}{Name on controller ui for ledger side (debit or credit).}
 
 \item{dynamic}{Name on controller ui for user supplied filters.}
+
+\item{examples}{Name on controller ui for example ledger cases.}
 
 \item{RGS}{Reactive value for the reference system.}
 

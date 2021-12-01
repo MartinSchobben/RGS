@@ -5,7 +5,7 @@
 \alias{table_server}
 \title{Hierarchical table shiny module}
 \usage{
-table_ui(id, select, download = TRUE)
+table_ui(id, select, download, level = "Niveau", ref_code = "Referentiecode")
 
 table_server(id, RGS, labels = "Niveau ")
 }
@@ -15,6 +15,10 @@ table_server(id, RGS, labels = "Niveau ")
 \item{select}{Add variable selection interface.}
 
 \item{download}{Add download button.}
+
+\item{level}{Name on controller ui for level selection.}
+
+\item{ref_code}{Name on controller ui for reference code selection.}
 
 \item{RGS}{Reactive value of the RGS data.}
 

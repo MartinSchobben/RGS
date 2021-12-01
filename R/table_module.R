@@ -7,6 +7,8 @@
 #' @param RGS Reactive value of the RGS data.
 #' @param select Add variable selection interface.
 #' @param download Add download button.
+#' @param level Name on controller ui for level selection.
+#' @param ref_code Name on controller ui for reference code selection.
 #' @param labels Labels for hierarchical structure (default = \code{"Niveau "}.
 #'
 #' @return Shiny GUI or server

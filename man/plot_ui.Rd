@@ -5,14 +5,14 @@
 \alias{plot_server}
 \title{Hierarchical plot shiny module}
 \usage{
-plot_ui(id, output = c("plot", "description"), download = TRUE)
+plot_ui(id, select = NULL, download)
 
 plot_server(id, RGS)
 }
 \arguments{
 \item{id}{Namespace id.}
 
-\item{output}{Plot output.}
+\item{select}{Ui element for variable selection.}
 
 \item{download}{Add download button.}
 

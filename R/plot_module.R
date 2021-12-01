@@ -3,7 +3,7 @@
 #' GUI and server modules for hierarchical plotting of RGS datasets.
 #'
 #' @param id Namespace id.
-#' @param output Plot output.
+#' @param select Ui element for variable selection.
 #' @param download Add download button.
 #' @param RGS Reactive value for the reference system.
 #'
