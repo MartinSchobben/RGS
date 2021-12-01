@@ -2,20 +2,25 @@
 % Please edit documentation in R/sunburst.R
 \name{RGS_sunburst}
 \alias{RGS_sunburst}
-\alias{parent_seeker}
 \title{Sunburst}
 \usage{
 RGS_sunburst(
-  RGS = parent_seeker(get_standard_business_reporting("Nederland")),
-  interactive = TRUE
+  RGS = get_standard_business_reporting("Nederland"),
+  interactive = TRUE,
+  n_max = 1,
+  seek_endnote = FALSE
 )
-
-parent_seeker(RGS = get_standard_business_reporting("Nederland"))
 }
 \arguments{
 \item{RGS}{\href{https://www.referentiegrootboekschema.nl/}{Referentie GrootboekSchema}}
 
 \item{interactive}{Make plot interactive.}
+
+\item{n_max}{Numeric value specifying maximum number rings plotted in
+sunburst plot.}
+
+\item{seek_endnote}{Logical indicating whether terminal endnotes of the
+hierarchical data should be calculated.}
 }
 \value{
 \code{ggplot2::\link[ggplot2:ggplot]{ggplot}()}

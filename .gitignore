@@ -5,3 +5,5 @@
 .DS_Store
 app.R
 .rsignore
+rsconnect
+

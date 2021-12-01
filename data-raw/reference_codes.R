@@ -15,7 +15,11 @@ code_btw <- dplyr::filter(
 
 examples <- tibble::tibble(
   daybook = "sales",
-  fixed = c("BVorDebHad", "BSchBepBtw", code_btw)
+  fixed = c(
+    reformat_data("BVorDebHad", bind = FALSE),
+    reformat_data("BSchBepBtw", bind = FALSE),
+    "W", code_btw
+    )
 )
 
 usethis::use_data(code_refs, overwrite = TRUE)

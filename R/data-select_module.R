@@ -23,7 +23,8 @@ select_ui <- function(id) {
 #' @rdname select_ui
 #'
 #' @export
-select_server <- function(id, RGS, ref_code = c("referentiecode", "nivo"),
+select_server <- function(id, RGS,
+                          ref_code = c("referentiecode", "nivo", "terminal"),
                           default = c("omschrijving", "referentienummer"),
                           additional = c("sortering", "omschrijving_verkort",
                                          "referentie_omslagcode")) {
@@ -33,7 +34,7 @@ select_server <- function(id, RGS, ref_code = c("referentiecode", "nivo"),
   moduleServer(id, function(input, output, session) {
 
     # default selection
-    def_vars <- reactive(default[default %in% colnames(RGS())])
+    def_vars <- reactive({default[default %in% colnames(RGS())]})
 
     observeEvent(RGS(), {
       updateSelectInput(
@@ -45,7 +46,6 @@ select_server <- function(id, RGS, ref_code = c("referentiecode", "nivo"),
     })
 
     # custom selection
-    reactive(dplyr::select(RGS(), ref_code, input$var))
-
+    reactive({dplyr::select(RGS(), ref_code, input$var)})
   })
 }

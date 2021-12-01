@@ -64,7 +64,9 @@ output_server <- function(id, augmented, n) {
             paste0(name, ".csv")
             },
             content = function(file) {
-              readr::write_csv(augmented(), file)
+              # remove terminal variable which is only for reference
+              RGS <- dplyr::select(augmented(), -.data$terminal)
+              readr::write_csv(RGS, file)
             }
           )
         }

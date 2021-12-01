@@ -6,7 +6,6 @@
 #' @param output Plot output.
 #' @param download Add download button.
 #' @param RGS Reactive value for the reference system.
-#' @param child Reactive value for children of parent RGS.
 #'
 #' @return Shiny GUI or server.
 #' @export
@@ -20,8 +19,8 @@ plot_ui <- function(id, select = NULL, download) {
         uiOutput(NS(id, "example")),
         shiny::fixedRow(
           actionButton(NS(id, "reset"), label = "Reset"),
-          # actionButton(NS(id, "terug"), label = "Terug"),
-          download
+          download,
+          actionButton(NS(id, "back"), label = "Terug"),
         ),
         ggiraph::ggiraphOutput(
           NS(id,  "plot"),
@@ -34,6 +33,11 @@ plot_ui <- function(id, select = NULL, download) {
         tags$br(),
         wellPanel(
           h5("Referentiecode"),
+          conditionalPanel(
+            condition = "output.reference==null",
+            "Klik op de grafiek om een code samen te stellen.",
+            ns = NS(id)
+          ),
           tableOutput(NS(id, "reference")),
           tags$br(),
           tags$br(),
@@ -46,44 +50,22 @@ plot_ui <- function(id, select = NULL, download) {
 #' @rdname plot_ui
 #'
 #' @export
-plot_server <- function(id, RGS, child) {
+plot_server <- function(id, RGS) {
 
   # check for reactive
   stopifnot(is.reactive(RGS))
-  stopifnot(is.reactive(child))
 
   moduleServer(id, function(input, output, session) {
 
-    # reactive plot
-    selected <- reactive({input$plot_selected})
-
-    # If "voorbeeld" then a fixed child is needed.
-    observeEvent(input$modus, {
-      if (input$modus == "example") {
-        child(union(child(), examples$fixed))
-        output$example <- renderUI({
-          selectInput(
-            NS(id, "daybook"),
-            h5("Dagboek"),
-            choices = c(Verkoop = "sales")
-          )
-        })
-      } else if (input$modus == "code") {
-        child(NULL)
-      }
-    })
-
-    # initiate output table
+    # initiate output table and selection
     rows <- reactiveVal(tibble::tibble(NULL))
-
-    # find parent belonging to reference code
-    parent <- reactive(parent_seeker(RGS()))
+    selected <- reactiveVal(NULL)
 
     # plot
     output$plot <- ggiraph::renderGirafe({
       suppressWarnings(
         ggiraph::girafe(
-          code = print(RGS_sunburst(parent())),
+          code = print(RGS_sunburst(RGS())),
           width_svg = 6,
           height_svg = 6,
           options = list(
@@ -101,9 +83,12 @@ plot_server <- function(id, RGS, child) {
     })
 
 
+    # reactive plot selection
+    observe(selected(input$plot_selected))
+
     # only select description for output table
     output$description <- renderTable({
-      if(nrow(rows()) < 1) {
+      if(nrow(rows()) == 0) {
         NULL
       } else {
         dplyr::select(
@@ -116,6 +101,17 @@ plot_server <- function(id, RGS, child) {
     digits = 0
     )
 
+    # update output table
+    observeEvent(selected(), {
+      # stop adding rows at terminal node but replace them
+      obs <- dplyr::filter(RGS(), .data$referentiecode %in% selected())
+      if (!selected() %in% find_children(RGS(), selected())) {
+        rows(dplyr::bind_rows(rows(), obs))
+      } else {
+        rows(dplyr::rows_upsert(rows(), obs, by = "nivo"))
+      }
+    })
+
 
     # referentiecode
     output$reference <- renderTable({ref_output(selected())})
@@ -123,58 +119,70 @@ plot_server <- function(id, RGS, child) {
     # reset
     observeEvent(input$reset, {session$reload()})
 
-    # update output table
-    observeEvent(selected(), {
-      # stop adding rows at terminal node but replace them
-        obs <- dplyr::filter(RGS(), .data$referentiecode %in% selected())
-        if (!selected() %in% find_children(parent(), selected())) {
-          rows(dplyr::bind_rows(rows(), obs))
-        } else {
-          rows(dplyr::rows_upsert(rows(), obs, by = "nivo"))
-        }
-      })
-
-    # find children for reference code based on example and plot
-    observeEvent(selected(), {
-      if (nrow(rows()) > 0) {
-        ref <- dplyr::pull(rows(), .data$referentiecode)[nrow(rows())]
-        code <- find_children(parent(), ref)
-        child(code)
+    # return to parent if return button clicked
+    observeEvent(input$back, {
+      # unselect plot
+      # session$sendCustomMessage(type = 'plot_set', message = character(0))
+      # update selected ref code
+      if (nrow(rows()) >= 0 ) {
+        selected(find_parents(selected()))
+      } else if (rows()$terminal[nrow(rows())]) {
+        selected(find_parents(find_parents(selected())))
+      }
+      # update table
+      if (nrow(rows()) <= 1) {
+        rows(tibble::tibble(NULL))
+      } else {
+        rows(rows()[-nrow(rows()),]) # 1 row
       }
       # message(glue::glue("{child()}"))
     })
 
-    # return children for reference code
-    reactive(child())
+    # return selection for reference code filtering
+    selected
 
   })
 }
 
 # find the children for the selected parent in the plot
 find_children <- function(
-  RGS = parent_seeker(get_standard_business_reporting("Nederland")),
+  RGS = get_standard_business_reporting("Nederland"),
   parent
   ) {
 
-  # select reference parent
-  # parent <- dplyr::pull(parent, .data$referentiecode)[nrow(parent)]
-  pattern <- glue::glue("^{parent}([:alnum:])*")
+  if (is.null(parent)) return(dplyr::pull(RGS, .data$referentiecode))
+  pattern <- glue::glue("^{parent}([:alnum:])+")
 
   # select find the children
-  children <- dplyr::filter(RGS, stringr::str_detect(.data$parent, pattern)) %>%
-    dplyr::pull(.data$child)
-  # if no more children short cut and return original group of children
+  children <- dplyr::filter(
+    RGS,
+    stringr::str_detect(.data$referentiecode, pattern)
+    ) %>%
+    dplyr::pull(.data$referentiecode)
+  # if no more children short cut and return original group of parents
   if (length(children) == 0) {
-    return(find_children(RGS, parent_code(parent_seeker_(parent)[[1]])))
+    return(find_children(RGS, find_parents(parent)))
   } else {
     return(children)
   }
 }
 
-ref_output <- function(reference = "BIva") {
-  #short cut
+find_parents <- function(child) {
+  if (is.null(child)) {
+    NULL
+  } else {
+    parent <- parent_code(parent_seeker_(child)[[1]])
+    if (parent == "") return(NULL) else return(parent)
+  }
+}
+
+
+ref_output <- function(reference = "BIva", filter_ref = NULL) {
+  # short cut
   if (is.null(reference)) return(tibble::tibble(NULL))
   reference <- parent_seeker_(reference)[[1]]
+  # filter when going backwards
+  if (!is.null(filter_ref)) reference <- reference[1:filter_ref]
   reference <- rlang::set_names(reference, 1:length(reference))
   purrr::map_dfc(reference, ~.x)
 

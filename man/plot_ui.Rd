@@ -7,7 +7,7 @@
 \usage{
 plot_ui(id, output = c("plot", "description"), download = TRUE)
 
-plot_server(id, RGS, child)
+plot_server(id, RGS)
 }
 \arguments{
 \item{id}{Namespace id.}
@@ -17,8 +17,6 @@ plot_server(id, RGS, child)
 \item{download}{Add download button.}
 
 \item{RGS}{Reactive value for the reference system.}
-
-\item{child}{Reactive value for children of parent RGS.}
 }
 \value{
 Shiny GUI or server.

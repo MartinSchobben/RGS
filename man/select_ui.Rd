@@ -10,7 +10,7 @@ select_ui(id)
 select_server(
   id,
   RGS,
-  ref_code = c("referentiecode", "nivo"),
+  ref_code = c("referentiecode", "nivo", "terminal"),
   default = c("omschrijving", "referentienummer")
 )
 }

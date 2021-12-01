@@ -13,11 +13,6 @@ RGS_app <- function() {
     sidebarLayout(
       sidebarPanel(
         input_ui("RGS", is.data.frame),
-        selectInput(
-          NS("plot", "modus"),
-          h5("Zoek opties"),
-          choices = c("Referentiecodes" = "code", "Voorbeelden" = "example")
-        ),
         filter_ui("filter")
         ),
       mainPanel(
@@ -46,23 +41,24 @@ RGS_app <- function() {
   server <- function(input, output, session) {
     thematic::thematic_shiny()
 
-    # initiate
-    child <- reactiveVal(NULL)
-    #observe(message(glue::glue("{child()}")))
+    # initiate plot selection (parent)
+    parent <- reactiveVal(NULL)
 
     # original data
     RGS <- input_server("RGS")
 
-    # transforms
-    filter <- filter_server("filter", RGS, child)
-    var <- select_server("select", filter)
+    # filter, select and find children of parent
+    obs <- filter_server("filter", RGS, parent)
+    var <- select_server("select", obs)
 
-    # plot
-    child <- plot_server("plot", filter, child)
+      # plot
+    x <- plot_server("plot", obs)
+    observe({parent(x())})
+
     # table
     table_server("table", var)
     # download
-    output_server("RGS", var, 3)
+    output_server("RGS", var, 2)
 
   }
   shinyApp(ui, server)
